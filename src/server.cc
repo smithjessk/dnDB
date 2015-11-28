@@ -26,9 +26,16 @@ class table_worker {
  private:
   std::string table_name;
   std::queue<query> queue;
-  std::mutex queue_mutex;
-  std::mutex waiting_mutex;
-  std::condition_variable cv; // Used to notify about new messages
+  std::mutex queue_mutex; // Used for sync. on pushing/popping from the queue.
+  std::mutex waiting_mutex; // Used for synchronization on cv.
+  std::condition_variable cv; 
+  // Used to notify about new messages. call cv.notify_one() when you push a 
+  // new message. 
+  // What happens if this is processing messages in the queue? 
+  // I think it won't do anything since there would be no threads waiting on 
+  // the condition variable.
+  //  
+  // TODO: Handle exceptions
 
  void process(query q) {};
 
