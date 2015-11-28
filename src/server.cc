@@ -35,25 +35,31 @@ class table_worker {
   // I think it won't do anything since there would be no threads waiting on 
   // the condition variable.
   //  
-  // TODO: Handle exceptions
+  // TODO: Handle exceptions. Note that if wait exits via exception, 
+  // process_messages still acquires the lock.
 
- void process(query q) {};
+  void process(query q) {};
 
- void process_messages() {
-  while (true) {
-    std::unique_lock<std::mutex> waiting_lock(waiting_mutex);
-    cv.wait(waiting_lock); // should we wait to see if the queue is empty?
-    query q;
-    while (!queue.empty()) {
-      { // to avoid popping and pushing at the same time
-        std::lock_guard<std::mutex> lock(queue_mutex);
-        q = queue.front();
-        queue.pop();
+
+  void process_messages() {
+    while (true) {
+      std::cout << "process_messages wants waiting_mutex" << std::endl;
+      std::unique_lock<std::mutex> waiting_lock(waiting_mutex);
+      cv.wait(waiting_lock); // Predicate to wait for non-empty queue?
+      std::cout << "process_messages acquired waiting_lock" << std::endl;
+      query q;
+      while (!queue.empty()) {
+        { // to avoid popping and pushing at the same time
+          std::cout << "process_messages wants to acquire queue_mutex" << std::endl;
+            std::lock_guard<std::mutex> lock(queue_mutex);
+          std::cout << "process_messages acquired queue_mutex" << std::endl;
+          q = queue.front();
+          queue.pop();
+        }
+        process(q);
       }
-      process(q);
-    }  
+    }
   }
-}
 
  public:
   table_worker(std::string name)
@@ -66,12 +72,35 @@ class table_worker {
   std::condition_variable *get_cv() {
     return &cv;
   }
+
+  std::mutex *get_waiting_mutex() {
+    return &waiting_mutex;
+  }
+
+  std::mutex *get_queue_mutex() {
+    return &queue_mutex;
+  }
+
+  std::thread spawn() {
+    return std::thread( [this] { process_messages(); });
+  }
 };
 
-std::unordered_map<std::string, table_worker*> workers;
+std::unordered_map<std::string, table_worker*> workers(0);
 table_worker tw1("one");
 
 void declare_routes(crow::SimpleApp &app) {
+  CROW_ROUTE(app, "/a")
+  .methods("GET"_method)
+  ([] {
+    std::mutex *copy = workers.at("one")->get_queue_mutex();
+    std::lock_guard<std::mutex> lock(*copy);
+    std::thread t1 = workers.at("one")->spawn();
+    t1.join();
+    return "malicious";
+  });
+
+
   CROW_ROUTE(app, "/ping")
   .methods("GET"_method)
   ([] {
@@ -119,6 +148,7 @@ void declare_routes(crow::SimpleApp &app) {
 
 int main() {
   crow::SimpleApp app;
+  workers["one"] = &tw1;
   declare_routes(app);
   app.port(8080).run();
 }
