@@ -5,6 +5,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <string>
+#include <cstring>
+#include <sstream>
 #include <queue>
 
 #include "query_types.h"
@@ -15,7 +17,7 @@ class table_worker {
   std::mutex queue_mutex;
   std::condition_variable cv;
   std::string table_name;
-  std::queue<query> queue;
+  std::queue<query*> queue;
   bool done;
   bool notified;
   
@@ -25,16 +27,37 @@ class table_worker {
   // TODO: Handle exceptions. Note that if wait exits via exception, 
   // process_messages still acquires the lock.
 
-  void process(query q) {};
+  void process(query *q) {
+    switch (q->type) {
+      case READ: {
+        std::printf("Handling read query\n");
+        char *result = (char*) malloc(32 * sizeof(char));
+        std::string id_as_string;
+        std::stringstream ss;
+        ss << q->id;
+        ss >> id_as_string;
+        strcpy(result, id_as_string.c_str());
+        q->data = result;
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  };
 
   void process_messages() {
     while (!done) {
-      std::unique_lock<std::mutex> lock(queue_mutex);
+      std::unique_lock<std::mutex> queue_lock(queue_mutex);
       while (!notified) { // To avoid spurious wakeups
-        cv.wait(lock); // Note that this releases the lock
+        cv.wait(queue_lock); // Note that this releases the queue_lock
       }
       while (!queue.empty()) {
-        // process(q);
+        query *q = queue.front();
+        queue.pop();
+        process(q);
+        q->finished = true;
+        q->cv.notify_one();
       }
       notified = false;
     }
@@ -60,13 +83,13 @@ class table_worker {
     return &queue_mutex;
   }
 
+  void add_query(query *q) {
+    queue.push(q);
+  }
+
   void notify() {
     this->notified = true;
     this->cv.notify_one();
-  }
-
-  std::thread spawn() {
-    return std::thread( [this] { process_messages(); });
   }
 };
 

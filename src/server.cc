@@ -14,23 +14,9 @@
 // conditions. 
 // Remove the element from the map in the HTTP response code.
 
-worker_manager wm;
+worker_manager manager;
 
 void declare_routes(crow::SimpleApp &app) {
-  CROW_ROUTE(app, "/a")
-  .methods("GET"_method)
-  ([] {
-    std::mutex *copy = wm.get_queue_mutex("one");
-    {
-      std::cout << "route vying for queue_mutex" << std::endl;
-      std::lock_guard<std::mutex> lock(*copy);
-      std::cout << "route acquired queue_mutex" << std::endl;
-      wm.notify("one");
-    }
-    return "malicious";
-  });
-
-
   CROW_ROUTE(app, "/ping")
   .methods("GET"_method)
   ([] {
@@ -53,7 +39,24 @@ void declare_routes(crow::SimpleApp &app) {
   CROW_ROUTE(app, "/table/read")
   .methods("POST"_method)
   ([](const crow::request &req) {
-    return crow::response("POST /table/read");
+    auto body = crow::json::load(req.body);
+    if (!body) {
+      return crow::response(400);
+    }
+    try {
+      std::string table_name = body["table_name"].s();
+      long query_id = manager.add_query(table_name, READ);
+      query *q = manager.get_query_pointer(query_id);
+      while (!q->finished) {
+        std::unique_lock<std::mutex> query_lock(q->mutex);
+        q->cv.wait(query_lock);
+      }
+      std::string *data = (std::string *) q->data;
+      return crow::response("POST /table/read " + *data);
+    } catch (int n) {
+      std::printf("POST /table/read encountered an error: %d\n", n);
+      return crow::response(400); // Bad request
+    }
   });
 
   CROW_ROUTE(app, "/table/update")
@@ -79,7 +82,7 @@ void declare_routes(crow::SimpleApp &app) {
 int main() {
   crow::SimpleApp app;
   table_worker tw1("one");
-  wm.add_worker(&tw1);
+  manager.add_worker(&tw1);
   declare_routes(app);
   app.port(8080).run();
 }
