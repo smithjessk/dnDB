@@ -1,6 +1,6 @@
 CXX_DEFAULT = g++
 CXX_FANCY = clang++
-CFLAGS = -std=c++11 -lpthread -lboost_system
+CFLAGS = -Wall -std=c++11 -lpthread -lboost_system
 
 all:
 	mkdir -p bin
