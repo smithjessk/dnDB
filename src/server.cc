@@ -89,8 +89,38 @@ class table_worker {
   }
 };
 
-std::unordered_map<std::string, table_worker*> workers(0);
-table_worker tw1("one");
+class worker_manager {
+ private:
+  std::unordered_map<std::string, table_worker*> workers;
+ public:
+  worker_manager() {
+    workers.reserve(10); // Decent initial guess on number of tables
+  };
+
+  void add_worker(table_worker *tw) {
+    workers[tw->get_name()] = tw;
+  }
+
+  std::mutex *get_queue_mutex(std::string worker_name) {
+    try {
+      return workers.at(worker_name)->get_queue_mutex();
+    } catch (int n) { // In case the worker_name is not valid
+      return NULL;
+    }
+  }
+
+  void notify(std::string worker_name) {
+    try {
+      workers.at(worker_name)->notify();
+    } catch (int n) { // In case the worker_name is not valid
+      std::printf("Tried to notify %s but could not find it\n", 
+        worker_name.c_str());
+      return;
+    }
+  }
+};
+
+worker_manager wm;
 
 // To properly hang up on results, maintain a map between some sort of query 
 // ID and the query struct. Can't use queue because that would introduce race 
@@ -100,14 +130,13 @@ void declare_routes(crow::SimpleApp &app) {
   CROW_ROUTE(app, "/a")
   .methods("GET"_method)
   ([] {
-    std::mutex *copy = workers.at("one")->get_queue_mutex();
+    std::mutex *copy = wm.get_queue_mutex("one");
     {
       std::cout << "route vying for queue_mutex" << std::endl;
       std::lock_guard<std::mutex> lock(*copy);
       std::cout << "route acquired queue_mutex" << std::endl;
-      workers.at("one")->notify();
+      wm.notify("one");
     }
-    std::cout << "notified" << std::endl;
     return "malicious";
   });
 
@@ -159,7 +188,8 @@ void declare_routes(crow::SimpleApp &app) {
 
 int main() {
   crow::SimpleApp app;
-  workers["one"] = &tw1;
+  table_worker tw1("one");
+  wm.add_worker(&tw1);
   declare_routes(app);
   app.port(8080).run();
 }
