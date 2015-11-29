@@ -24,11 +24,17 @@ struct query_response {
 
 class table_worker {
  private:
+  std::mutex queue_mutex;
+  std::condition_variable cv;
+ public:
+  bool done;
+  bool notified;
+ private:
   std::string table_name;
-  std::queue<query> queue;
+  std::queue<query> queue;/*
   std::mutex queue_mutex; // Used for sync. on pushing/popping from the queue.
   std::mutex waiting_mutex; // Used for synchronization on cv.
-  std::condition_variable cv; 
+  std::condition_variable cv; */
   // Used to notify about new messages. call cv.notify_one() when you push a 
   // new message. 
   // What happens if this is processing messages in the queue? 
@@ -40,7 +46,24 @@ class table_worker {
 
   void process(query q) {};
 
+  void process_messages() {
+    while (!done) {
+      std::cout << "not done, trying to get queue_lock" << std::endl;
+      std::unique_lock<std::mutex> lock(queue_mutex);
+      std::cout << "Acquired queue_mutex" << std::endl;
+      while (!notified) { // To avoid spurious wakeups
+        std::cout << "Waiting on cv..." << std::endl;
+        cv.wait(lock);
+      }
+      while (!queue.empty()) {
+        std::cout << "Processing thing in the queue" << std::endl;
+      }
+      std::cout << "Done processing" << std::endl;
+      notified = false;
+    }
+  };
 
+  /*
   void process_messages() {
     while (true) {
       std::cout << "process_messages wants waiting_mutex" << std::endl;
@@ -59,11 +82,13 @@ class table_worker {
         process(q);
       }
     }
-  }
+  }*/
 
  public:
   table_worker(std::string name)
-    : table_name(name) {}
+    : table_name(name),
+    done(false),
+    notified(false) {}
 
   std::string get_name() {
     return table_name;
@@ -71,10 +96,6 @@ class table_worker {
 
   std::condition_variable *get_cv() {
     return &cv;
-  }
-
-  std::mutex *get_waiting_mutex() {
-    return &waiting_mutex;
   }
 
   std::mutex *get_queue_mutex() {
@@ -93,9 +114,14 @@ void declare_routes(crow::SimpleApp &app) {
   CROW_ROUTE(app, "/a")
   .methods("GET"_method)
   ([] {
-    std::mutex *copy = workers.at("one")->get_queue_mutex();
-    std::lock_guard<std::mutex> lock(*copy);
     std::thread t1 = workers.at("one")->spawn();
+    std::mutex *copy = workers.at("one")->get_queue_mutex();
+    {
+      std::lock_guard<std::mutex> lock(*copy);
+      workers.at("one")->notified = true;
+      workers.at("one")->get_cv()->notify_one();  
+    }
+    std::cout << "notified" << std::endl;
     t1.join();
     return "malicious";
   });
