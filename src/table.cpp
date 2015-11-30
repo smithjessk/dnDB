@@ -7,23 +7,23 @@
 
 class Table {
     public:
-        int numRows, numColumns;
+        int numRows, numCols;
         std::unordered_map<std::string, std::unordered_map<int, std::string> > masterTable;
-        //Table(std::string filepath);
-        Table(int,int);
-        void addElement(std::vector<std::string>);
-        //drop(std::string columnName);
+        Table(std::string filepath);
+        void addElement(std::vector<std::string>); //maybe different argument
+        void dropColumn(std::string columnName);
+        void dropRow(std::string rowName);
         int getNumRows();
         int getNumCols();
         std::vector<std::string> getColNames();
 };
 
-Table::Table(int r, int c){
-    numRows=r;
-    numColumns=c;
+Table::Table(std::string filepath){ //CSVreader to masterTable
+    
+    //initialize numRows, numCols
 }
 
-void Table::addElement(std::vector<std::string>){
+void Table::addElement(std::vector<std::string>){ 
   
 }
 
@@ -32,7 +32,7 @@ int Table::getNumRows(){
 }
 
 int Table::getNumCols(){
-    return numColumns;
+    return numCols;
 }
 
 std::vector<std::string> Table::getColNames(){
@@ -44,9 +44,3 @@ std::vector<std::string> Table::getColNames(){
 
 }
 
-
-int main()
-{
-
-    return 0;
-}
