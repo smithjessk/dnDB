@@ -11,6 +11,7 @@ class Table {
         std::unordered_map<std::string, std::unordered_map<int, std::string> > masterTable;
         Table(std::string filepath);
         void addRow(std::string);
+        void addRow(int, std::string);
         void addColumn(std::string);
         void removeRow(int);
         void removeColumn(std::string);
@@ -25,6 +26,10 @@ Table::Table(std::string filepath){ //CSVreader to masterTable
 }
 
 void Table::addRow(std::string CSV){   
+
+}
+
+void Table::addRow(int id, std::string CSV){ 
 
 }
 
