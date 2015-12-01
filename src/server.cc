@@ -48,7 +48,6 @@ void declare_routes(crow::SimpleApp &app) {
       long id = manager.get_next_query_id();
       query *q = new query(id, READ);
       zmq::message_t request = q->generate_request();
-      std::printf("Generated request\n");
       std::unique_lock<std::mutex> lock(conn->mutex);
       conn->socket.send(request);
       zmq::message_t reply;

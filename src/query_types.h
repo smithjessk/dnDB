@@ -71,9 +71,8 @@ struct query {
 
   zmq::message_t generate_request() {
     zmq::message_t request(get_total_size());
-    std::printf("query_types: Data size is %lu\n", data_size);
     long size = get_total_size();
-    mempcpy((void *) request.data(), this, size);
+    mempcpy((void *) request.data(), this, size); 
     return request;
   }
 };
