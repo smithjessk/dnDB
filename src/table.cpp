@@ -33,11 +33,14 @@ void Table::addColumn(std::string colName){
 }
 
 void Table::removeRow(int id){
-
+    std::vector<std::string> cols = getColNames();
+    for(auto k:cols){
+        masterTable[k].erase(id);
+    }
 }
 
 void Table::removeColumn(std::string colName){
-
+    masterTable.erase(colName);
 }
 
 int Table::getNumRows(){
