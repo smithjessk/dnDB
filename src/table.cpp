@@ -4,6 +4,7 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
+#include <fstream>
 
 class Table {
     public:
@@ -11,7 +12,7 @@ class Table {
         std::unordered_map<std::string, std::unordered_map<int, std::string> > masterTable;
         bool is_number(const std::string);
         Table(std::string filepath);
-        void addRow(std::string);
+        //void addRow(std::string); do we need?
         void addRow(int, std::string);
         void addColumn(std::string);
         void removeRow(int);
@@ -25,25 +26,8 @@ bool is_number(const std::string& s) {
     return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) { return !std::isdigit(c); }) == s.end();
 }
 
-void Table::addRow(std::string CSV){ //
-    //GENERATE id, 
-    //call addRow(int, string);
-}
-
-void Table::addRow(int id, std::string CSV){ //
-    //foo stores parsed CSV
-
-    std::vector<std::string> foo {"rowval1", "rowval2", "rowval3"}; //TEMPORARY. SHOULD BE DERIVED FROM CSVREADER
-    std::vector<std::string> cols = getColNames();
-    //FOO MUST BE SORTED BY COLS (Corresponding column to parsed value aka name:"jess", age:"14")
-    //THROW EXCEPTION IF SIZE MISMATCH
-
-    int cnt=0;
-    for(auto k:cols){
-        masterTable[k][id]=foo.at(cnt);
-        cnt++;
-    }
-
+void Table::addRow(int id, std::string header, std::string CSV){ //
+    //implementing 
 }
 
 void Table::addColumn(std::string colName){
