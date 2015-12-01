@@ -25,11 +25,24 @@ Table::Table(std::string filepath){ //CSVreader to masterTable
     //initialize numRows, numCols
 }
 
-void Table::addRow(std::string CSV){   
-
+void Table::addRow(std::string CSV){ //
+    //GENERATE id, 
+    //call addRow(int, string);
 }
 
-void Table::addRow(int id, std::string CSV){ 
+void Table::addRow(int id, std::string CSV){ //
+    //foo stores parsed CSV
+
+    std::vector<std::string> foo {"rowval1", "rowval2", "rowval3"}; //TEMPORARY. SHOULD BE DERIVED FROM CSVREADER
+    std::vector<std::string> cols = getColNames();
+    //FOO MUST BE SORTED BY COLS (Corresponding column to parsed value aka name:"jess", age:"14")
+    //THROW EXCEPTION IF SIZE MISMATCH
+
+    int cnt=0;
+    for(auto k:cols){
+        masterTable[k][id]=foo.at(cnt);
+        cnt++;
+    }
 
 }
 
