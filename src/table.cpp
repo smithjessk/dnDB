@@ -9,6 +9,7 @@ class Table {
     public:
         int numRows, numCols;
         std::unordered_map<std::string, std::unordered_map<int, std::string> > masterTable;
+        bool is_number(const std::string);
         Table(std::string filepath);
         void addRow(std::string);
         void addRow(int, std::string);
@@ -20,9 +21,8 @@ class Table {
         std::vector<std::string> getColNames();
 };
 
-Table::Table(std::string filepath){ //CSVreader to masterTable
-    
-    //initialize numRows, numCols
+bool is_number(const std::string& s) {
+    return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) { return !std::isdigit(c); }) == s.end();
 }
 
 void Table::addRow(std::string CSV){ //
@@ -76,5 +76,68 @@ std::vector<std::string> Table::getColNames(){
     }
     return keys;
 
+}
+
+Table(std::string fileName) {
+    std::ifstream myFile;
+    myFile.open(fileName);
+    if (!myFile) {
+        return -1;
+    }
+    
+    std::string line;
+    int lineCount = 0;
+    std::string header;
+    
+    while (getline(myFile, line)) {
+        
+        //find first comma
+        int comma = (int)line.find(",");
+        
+        //if header line
+        if (lineCount == 0) {
+            //get header string
+            header = line.substr(comma + 1);
+            
+            int columnCount = 0;
+            
+            while (comma != -1) {
+                comma = (int)line.find(",");
+                
+                //string before first comma
+                std::string value = line.substr(0, line.find(","));
+                
+                //if first line & first column, should be "_id"
+                if (columnCount == 0) {
+                    if (value != "_id") {
+                        //ERROR: value is not "_id"
+                        std::cout << "ERROR: value '" << value << "'is not \"_id\"" << std::endl;
+                        return -1;
+                    }
+                }
+                //IMPLEMENT: addColumn(value);
+                
+                //remove first string and comma from line for next iteration
+                line = line.substr(line.find(",") + 1);
+                columnCount++;
+            }
+        }
+        //regular rows
+        else {
+            std::string id = line.substr(0, comma);
+            if (!is_number(id)) {
+                std::cout << "ERROR: id " << id << " not an int" << std::endl;
+                return -1;
+            }
+            
+            int value = std::stoi(id);
+            
+            //IMPLEMENT: addRow(value ,header, line.substr(comma + 1));
+        }
+        
+        lineCount++;
+    }
+    
+    return 0;
 }
 
