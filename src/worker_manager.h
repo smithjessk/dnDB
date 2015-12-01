@@ -31,14 +31,7 @@ class worker_manager {
     workers[tw->get_table_name()] = tw;
     conns[tw->get_table_name()] = tc;
   }
-
-  // Return the query_id
-  long add_query(std::string table_name, query_type type) {
-    query q(get_next_query_id(), type);
-    queries[q.id] = &q;
-    return queries[q.id]->id;
-  }
-
+  
   query *get_query_pointer(long id) {
     return queries[id];
   }

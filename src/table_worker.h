@@ -40,10 +40,16 @@ class table_worker {
     while (!done) {
       zmq::message_t request;
       input_socket.recv(&request);
+      std::printf("Got request\n");
+      query q((char *) request.data());
+      std::printf("Request has id %lu\n", q.id);
+      std::printf("Query type is %d\n", q.type);
+      // process(q);
+      std::printf("Successful is %d\n", q.successful);
+      std::printf("Data size is %lu\n", q.data_size);
       zmq::message_t reply(5);
       memcpy ((void *) reply.data (), "World", 5);
       input_socket.send(reply);
-      // query q((char*) request.data());
     }
   };
 

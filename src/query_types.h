@@ -4,6 +4,7 @@
 #include <sstream>
 #include <mutex>
 #include <condition_variable>
+#include "../deps/zmq.hpp"
 
 struct table_connection {
   std::string address;
@@ -31,26 +32,49 @@ struct query {
   long id;
   query_type type;
   bool successful;
+  long data_size;
   void *data;
 
   query (long id, query_type qt) {
     this->id = id;
     this->type = qt;
     this->successful = false;
+    this->data_size = 0;
     this->data = NULL;
   }
 
   query (char *start) {
+    std::printf("%p\n", start);
     id = *((long*) start);
     start += sizeof(long);
 
+    std::printf("%p\n", start);
     type = *((query_type*) start);
     start += sizeof(query_type);
 
+    std::printf("%p\n", start);
     successful = *((bool*) start);
     start += sizeof(bool);
 
+    std::printf("%p\n", start);
+    data_size = *((long*) start);
+    start += sizeof(long);
+
+    std::printf("%p\n", start);
     data = (void*) start;
+  }
+
+  long get_total_size() {
+    return 2 * sizeof(long) + sizeof(query_type) + sizeof(bool) + data_size + 
+      sizeof(void *);
+  }
+
+  zmq::message_t generate_request() {
+    zmq::message_t request(get_total_size());
+    std::printf("query_types: Data size is %lu\n", data_size);
+    long size = get_total_size();
+    mempcpy((void *) request.data(), this, size);
+    return request;
   }
 };
 
