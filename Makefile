@@ -1,6 +1,8 @@
 CXX_DEFAULT = g++
 CXX_FANCY = clang++
-NORMAL_FLAGS = -Wall -std=c++11 -lpthread -lboost_system -lboost_thread
+COMPILER_OPTIONS = -Wall -std=c++11
+LINKED_LIBRARIES = -lpthread -lboost_system -lboost_thread -lzmq
+NORMAL_FLAGS = $(COMPILER_OPTIONS) $(LINKED_LIBRARIES)
 DEBUG_FLAGS = -O0 -g
 
 all:

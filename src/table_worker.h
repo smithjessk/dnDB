@@ -1,31 +1,22 @@
 #ifndef TABLE_WORKER_H
 #define TABLE_WORKER_H
 
-#include <thread>
-#include <mutex>
-#include <condition_variable>
 #include <string>
 #include <cstring>
 #include <sstream>
-#include <queue>
+#include <thread>
 
+#include "../deps/zmq.hpp"
 #include "query_types.h"
 
 class table_worker {
  private:
-  std::thread t;
-  std::mutex queue_mutex;
-  std::condition_variable cv;
   std::string table_name;
-  std::queue<query*> queue;
   bool done;
-  bool notified;
-  
-  // Used to notify about new messages. call cv.notify_one() when you push a 
-  // new message. 
-  //  
-  // TODO: Handle exceptions. Note that if wait exits via exception, 
-  // process_messages still acquires the lock.
+  zmq::context_t context;
+  zmq::socket_t input_socket;
+  std::thread t;
+  int port;
 
   void process(query *q) {
     switch (q->type) {
@@ -48,48 +39,34 @@ class table_worker {
 
   void process_messages() {
     while (!done) {
-      std::unique_lock<std::mutex> queue_lock(queue_mutex);
-      while (!notified) { // To avoid spurious wakeups
-        cv.wait(queue_lock); // Note that this releases the queue_lock
-      }
-      while (!queue.empty()) {
-        query *q = queue.front();
-        queue.pop();
-        process(q);
-        q->finished = true;
-        q->cv.notify_one();
-      }
-      notified = false;
+      zmq::message_t request;
+      input_socket.recv(&request);
+      std::printf("%s got a request\n", get_table_name().c_str());
+      query q((char*) request.data());
     }
   };
 
  public:
-  table_worker(std::string name) {
-    table_name = name;
-    done = false;
-    notified = false;
-    t = std::thread([this] { process_messages(); });
+  table_worker(std::string name, int port)
+    : table_name(name),
+    done(false),
+    context(1),
+    input_socket(context, ZMQ_REP) { // Compiler wants this
+      input_socket.bind(get_bound_address());
+      t = std::thread([this] { process_messages(); });
   }
 
-  std::string get_name() {
+  std::string get_table_name() {
     return table_name;
   }
 
-  std::condition_variable *get_cv() {
-    return &cv;
-  }
-
-  std::mutex *get_queue_mutex() {
-    return &queue_mutex;
-  }
-
-  void add_query(query *q) {
-    queue.push(q);
-  }
-
-  void notify() {
-    this->notified = true;
-    this->cv.notify_one();
+  std::string get_bound_address() {
+    std::string address;
+    std::stringstream ss;
+    ss << "tcp://*:";
+    ss << port;
+    ss >> address;
+    return address;
   }
 };
 

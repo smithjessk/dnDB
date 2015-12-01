@@ -1,6 +1,7 @@
 #include "table_worker.h"
 #include "worker_manager.h"
 #include "../deps/crow_all.h"
+#include "../deps/zmq.hpp"
 
 /**
  * 1) Extract information from the query
@@ -47,10 +48,6 @@ void declare_routes(crow::SimpleApp &app) {
       std::string table_name = body["table_name"].s();
       long query_id = manager.add_query(table_name, READ);
       query *q = manager.get_query_pointer(query_id);
-      while (!q->finished) {
-        std::unique_lock<std::mutex> query_lock(q->mutex);
-        q->cv.wait(query_lock);
-      }
       std::string *data = (std::string *) q->data;
       return crow::response("POST /table/read " + *data);
     } catch (int n) {
@@ -81,7 +78,7 @@ void declare_routes(crow::SimpleApp &app) {
 
 int main() {
   crow::SimpleApp app;
-  table_worker tw1("one");
+  table_worker tw1("one", 5555);
   manager.add_worker(&tw1);
   declare_routes(app);
   app.port(8080).run();

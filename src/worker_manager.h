@@ -24,35 +24,18 @@ class worker_manager {
   }
 
   void add_worker(table_worker *tw) {
-    workers[tw->get_name()] = tw;
+    workers[tw->get_table_name()] = tw;
   }
 
   // Return the query_id
   long add_query(std::string table_name, query_type type) {
     query q(get_next_query_id(), type);
     queries[q.id] = &q;
-    std::mutex *q_m = workers.at(table_name)->get_queue_mutex();
-    {
-      std::lock_guard<std::mutex> lock(*q_m);
-      workers.at(table_name)->add_query(&q);
-      std::printf("Added query to queue of %s\n", table_name.c_str());
-      notify("table_name");
-    }
     return queries[q.id]->id;
   }
 
   query *get_query_pointer(long id) {
     return queries[id];
-  }
-
-  void notify(std::string table_name) {
-    try {
-      workers.at(table_name)->notify();
-    } catch (int n) { // In case the table_name is not valid
-      std::printf("Tried to notify %s but could not find it\n", 
-        table_name.c_str());
-      return;
-    }
   }
 };
 
