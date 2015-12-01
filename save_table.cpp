@@ -12,7 +12,7 @@ void save_table(unordered_map<string, unordered_map<int, string>> table);
 int main(){
 	//sample tables
 	unordered_map<int, string> a{{1, "12"}, {2, "19"}, {3, "18"}};
-	unordered_map<int, string> b{{1, "Peter"}, {2, "Jess"}};
+	unordered_map<int, string> b{{1, "Peter"}, {2, "Jess"}, {4, "Victor"}};
 	unordered_map<string, unordered_map<int, string>> hi{{"age", a}, {"name", b}};
 	save_table(hi);
 	return 0;
@@ -25,7 +25,7 @@ void save_table(unordered_map<string, unordered_map<int, string>> table){
 		vector<int> keyValue;
 
 		//save the names of the columns 
-		save_file << " ,";
+		save_file << "_id,";
 		for(auto colIt = table.begin(); colIt != table.end(); ++colIt){
 			save_file << "\"" << colIt->first << "\"";
 			counter++;
@@ -34,12 +34,14 @@ void save_table(unordered_map<string, unordered_map<int, string>> table){
 			}else{
 				save_file << endl;
 			}
+			//compile list of all the ids possible in the map
 			unordered_map<int, string> tempMap = colIt->second;
 			for(auto rowIt = tempMap.begin(); rowIt != tempMap.end(); ++rowIt){
 				keyValue.push_back(rowIt->first);
 			}
 		}
 
+		//make the values unique
 		sort(keyValue.begin(), keyValue.end());
 		keyValue.erase(unique(keyValue.begin(), keyValue.end() ), keyValue.end());
 
@@ -53,16 +55,21 @@ void save_table(unordered_map<string, unordered_map<int, string>> table){
 				unordered_map<int, string> row = colIt->second;
 				for(auto rowIt = row.begin(); rowIt != row.end(); ++rowIt){
 					if(rowIt->first == keyValue[indexCounter]){
-						save_file << "\"" << rowIt->second << "\"" << ",";
+						save_file << "\"" << rowIt->second << "\"";
 						matchCounter++;
-					}	
+					}
 				}
+				//adds a space for empty values
 				if(matchCounter == 0){
-					save_file << "\" \",";
+					save_file << "\" \"";
+				}
+				//add the comma to separate entries
+				if(colIt != --table.end()){
+					save_file << ",";
 				}
 				matchCounter = 0;
 			}
-			
+			//new line for new id
 			save_file << endl;
 			indexCounter++;
 			counter++;
