@@ -10,9 +10,10 @@ class Table {
         int numRows, numCols;
         std::unordered_map<std::string, std::unordered_map<int, std::string> > masterTable;
         Table(std::string filepath);
-        void addElement(std::vector<std::string>); //maybe different argument
-        void dropColumn(std::string columnName);
-        void dropRow(std::string rowName);
+        void addRow(std::string);
+        void addColumn(std::string);
+        void removeRow(int);
+        void removeColumn(std::string);
         int getNumRows();
         int getNumCols();
         std::vector<std::string> getColNames();
@@ -23,8 +24,20 @@ Table::Table(std::string filepath){ //CSVreader to masterTable
     //initialize numRows, numCols
 }
 
-void Table::addElement(std::vector<std::string>){ 
-  
+void Table::addRow(std::string CSV){   
+
+}
+
+void Table::addColumn(std::string colName){
+    masterTable[colName];
+}
+
+void Table::removeRow(int id){
+
+}
+
+void Table::removeColumn(std::string colName){
+
 }
 
 int Table::getNumRows(){
