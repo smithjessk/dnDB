@@ -1,6 +1,30 @@
 #ifndef QUERY_TYPES_H
 #define QUERY_TYPES_H
 
+#include <sstream>
+#include <mutex>
+#include <condition_variable>
+
+struct table_connection {
+  std::string address;
+  bool waiting_for_reply;
+  std::mutex mutex;
+  std::condition_variable cv;
+  zmq::context_t context;
+  zmq::socket_t socket;
+
+  table_connection(int port)
+    : context(1),
+    socket(context, ZMQ_REQ) {
+      std::stringstream ss;
+      ss << "tcp://localhost:";
+      ss << port;
+      ss >> address;
+      socket.connect(address);
+      waiting_for_reply = false;
+  }
+};
+
 enum query_type {CREATE, READ, UPDATE, DELETE};
 
 struct query {

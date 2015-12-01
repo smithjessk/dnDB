@@ -46,10 +46,20 @@ void declare_routes(crow::SimpleApp &app) {
     }
     try {
       std::string table_name = body["table_name"].s();
-      long query_id = manager.add_query(table_name, READ);
-      query *q = manager.get_query_pointer(query_id);
-      std::string *data = (std::string *) q->data;
-      return crow::response("POST /table/read " + *data);
+      std::printf("Processing query for %s\n", table_name.c_str());
+      table_connection *conn = manager.get_conn(table_name);
+      std::printf("addr = %s\n", conn->address.c_str());
+      std::printf("Got the proper connection\n");
+      std::unique_lock<std::mutex> lock(conn->mutex);
+      std::printf("Got the lock\n");
+      zmq::message_t request(6);
+      memcpy ((void *) request.data (), "Hello", 5);
+      conn->socket.send(request);
+      zmq::message_t reply;
+      conn->socket.recv(&reply);
+      lock.unlock();
+      sleep(10);
+      return crow::response("POST /table/read");
     } catch (int n) {
       std::printf("POST /table/read encountered an error: %d\n", n);
       return crow::response(400); // Bad request
@@ -79,7 +89,8 @@ void declare_routes(crow::SimpleApp &app) {
 int main() {
   crow::SimpleApp app;
   table_worker tw1("one", 5555);
-  manager.add_worker(&tw1);
+  table_connection tc1(5555);
+  manager.add(&tw1, &tc1);
   declare_routes(app);
   app.port(8080).run();
 }

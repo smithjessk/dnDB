@@ -40,15 +40,20 @@ class table_worker {
   void process_messages() {
     while (!done) {
       zmq::message_t request;
+      std::printf("Waitig for req\n");
       input_socket.recv(&request);
       std::printf("%s got a request\n", get_table_name().c_str());
-      query q((char*) request.data());
+      zmq::message_t reply(5);
+      memcpy ((void *) reply.data (), "World", 5);
+      input_socket.send(reply);
+      // query q((char*) request.data());
     }
   };
 
  public:
   table_worker(std::string name, int port)
     : table_name(name),
+    port(port),
     done(false),
     context(1),
     input_socket(context, ZMQ_REP) { // Compiler wants this
@@ -63,9 +68,11 @@ class table_worker {
   std::string get_bound_address() {
     std::string address;
     std::stringstream ss;
+    std::printf("Port is %d\n", port);
     ss << "tcp://*:";
     ss << port;
     ss >> address;
+    std::printf("Listening on addr %s\n", address.c_str());
     return address;
   }
 };
