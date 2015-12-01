@@ -21,7 +21,6 @@ class table_worker {
   void process(query *q) {
     switch (q->type) {
       case READ: {
-        std::printf("Handling read query\n");
         char *result = (char*) malloc(32 * sizeof(char));
         std::string id_as_string;
         std::stringstream ss;
@@ -40,9 +39,7 @@ class table_worker {
   void process_messages() {
     while (!done) {
       zmq::message_t request;
-      std::printf("Waitig for req\n");
       input_socket.recv(&request);
-      std::printf("%s got a request\n", get_table_name().c_str());
       zmq::message_t reply(5);
       memcpy ((void *) reply.data (), "World", 5);
       input_socket.send(reply);
@@ -68,11 +65,9 @@ class table_worker {
   std::string get_bound_address() {
     std::string address;
     std::stringstream ss;
-    std::printf("Port is %d\n", port);
     ss << "tcp://*:";
     ss << port;
     ss >> address;
-    std::printf("Listening on addr %s\n", address.c_str());
     return address;
   }
 };

@@ -46,22 +46,16 @@ void declare_routes(crow::SimpleApp &app) {
     }
     try {
       std::string table_name = body["table_name"].s();
-      std::printf("Processing query for %s\n", table_name.c_str());
       table_connection *conn = manager.get_conn(table_name);
-      std::printf("addr = %s\n", conn->address.c_str());
-      std::printf("Got the proper connection\n");
       std::unique_lock<std::mutex> lock(conn->mutex);
-      std::printf("Got the lock\n");
       zmq::message_t request(6);
       memcpy ((void *) request.data (), "Hello", 5);
       conn->socket.send(request);
       zmq::message_t reply;
       conn->socket.recv(&reply);
       lock.unlock();
-      sleep(10);
       return crow::response("POST /table/read");
     } catch (int n) {
-      std::printf("POST /table/read encountered an error: %d\n", n);
       return crow::response(400); // Bad request
     }
   });
