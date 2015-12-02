@@ -30,41 +30,60 @@ struct table_connection {
 
 enum query_type {CREATE, READ, UPDATE, DELETE};
 
+struct test {
+  char *data;
+
+  test () {
+    data = (char *)malloc(512);
+  }
+
+  test (char *start) {
+    mempcpy(this, start, 512);
+  }
+
+  zmq::message_t generate_message() {
+    zmq::message_t msg(512);
+    mempcpy((void *) msg.data(), this, 512);
+    return msg;
+  }
+};
+
 struct query {
   long id;
   query_type type;
   bool successful;
-  long data_size;
-  void *data;
+  std::string data;
 
   query (long id, query_type qt) {
     this->id = id;
     this->type = qt;
     this->successful = false;
-    this->data_size = 0;
-    this->data = NULL;
+    this->data = "";
   }
 
   query (char *start) {
     id = *((long*) start);
     start += sizeof(long);
 
+    std::cout << "id = " << id << std::endl;
+
     type = *((query_type*) start);
     start += sizeof(query_type);
+
+    std::cout << "type = " << type << std::endl;
 
     successful = *((bool*) start);
     start += sizeof(bool);
 
-    data_size = *((long*) start);
-    data_size = ntohl(data_size);
-    start += sizeof(long);
+    std::cout << "successful = " << successful << std::endl;
 
-    data = (void*) start;
+    data = *((std::string *) start);
+
+    std::cout << "data = " << data << std::endl;
   }
 
   long get_total_size() {
-    return 2 * sizeof(long) + sizeof(query_type) + sizeof(bool) + data_size + 
-      sizeof(void *);
+    return sizeof(long) + sizeof(query_type) + sizeof(bool) + data.size() + 1;
   }
 
   zmq::message_t generate_message() {

@@ -23,8 +23,7 @@ class table_worker {
   void process(query &q) {
     switch (q.type) {
       case READ: {
-        q.data_size = (long) sizeof(long);
-        memcpy(q.data, &(q.id), sizeof(long));
+        q.data = "test";
         q.successful = true;
         break;
       }
@@ -38,11 +37,13 @@ class table_worker {
     while (!done) {
       zmq::message_t request;
       input_socket.recv(&request);
-      query q((char *) request.data());
-      process(q);
-      std::cout << ntohl(*((long*) q.data)) << std::endl;
-      zmq::message_t reply = q.generate_message();
+      test t((char *) request.data());
+      std::cout << t.data[0] << std::endl;
+      // process(q);
+      zmq::message_t reply = t.generate_message();
+      std::cout << "size = " << reply.size() << std::endl;
       input_socket.send(reply);
+      std::cout << "sent fine" << std::endl;
     }
   };
 

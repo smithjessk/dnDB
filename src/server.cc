@@ -48,28 +48,30 @@ void declare_routes(crow::SimpleApp &app) {
       std::string table_name = body["table_name"].s();
       table_connection *conn = manager.get_conn(table_name);
       long id = manager.get_next_query_id();
-      query *q = new query(id, READ);
-      zmq::message_t request = q->generate_message();
+      /*query *q = new query(id, READ);
+      q->data = "abc";*/
+      test *t = new test();
+      t->data[0] = 'a';
+      zmq::message_t request = t->generate_message();
+      /*std::cout << "generated message" << std::endl;
+      char *temp = (char *)request.data() + sizeof(long) + sizeof(bool) + 
+        sizeof(query_type);
+      */
       std::unique_lock<std::mutex> lock(conn->mutex);
       conn->socket.send(request);
       zmq::message_t reply;
-      delete q;
+      delete t;
       conn->socket.recv(&reply);
       lock.unlock();
-      query *response = new query((char *) reply.data());
-      std::printf("message size = %lu\n", reply.size());
+      std::cout << "Got reply" << std::endl;
+      /*query *response = new query((char *) reply.data());
       std::printf("id = %lu\n", response->id);
-      std::printf("type = %d\n", response->type);
-      std::printf("data_size = %lu\n", response->data_size);
-      long returned_id = *((long *) response->data);
-      returned_id = ntohl(returned_id);
-      std::printf("returned_id = %lu\n", returned_id);
+      std::string data = response->data;
+      std::printf("data = %s\n", data.c_str());*/
+      test *response = new test((char *) reply.data());
+      std::cout << "first char: " << response->data[0] << std::endl;
       delete response;
-      std::string res;
-      std::stringstream ss;
-      ss << returned_id;
-      ss >> res;
-      return crow::response(res);
+      return crow::response("asdas");
     } catch (int n) {
       return crow::response(400); // Bad request
     }
