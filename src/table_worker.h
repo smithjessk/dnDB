@@ -1,10 +1,12 @@
 #ifndef TABLE_WORKER_H
 #define TABLE_WORKER_H
 
+#include <iostream>
 #include <string>
 #include <cstring>
 #include <sstream>
 #include <thread>
+#include <arpa/inet.h>
 
 #include "../deps/zmq.hpp"
 #include "query_types.h"
@@ -21,7 +23,7 @@ class table_worker {
   void process(query &q) {
     switch (q.type) {
       case READ: {
-        q.data_size = sizeof(long);
+        q.data_size = (long) sizeof(long);
         memcpy(q.data, &(q.id), sizeof(long));
         q.successful = true;
         break;
@@ -38,9 +40,7 @@ class table_worker {
       input_socket.recv(&request);
       query q((char *) request.data());
       process(q);
-      std::printf("data_size = %lu\n", q.data_size);
-      long temp = *((long *) q.data);
-      std::printf("long2 = %lu\n", temp);
+      std::cout << ntohl(*((long*) q.data)) << std::endl;
       zmq::message_t reply = q.generate_message();
       input_socket.send(reply);
     }

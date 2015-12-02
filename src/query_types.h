@@ -4,6 +4,8 @@
 #include <sstream>
 #include <mutex>
 #include <condition_variable>
+#include <arpa/inet.h>
+
 #include "../deps/zmq.hpp"
 
 struct table_connection {
@@ -54,6 +56,7 @@ struct query {
     start += sizeof(bool);
 
     data_size = *((long*) start);
+    data_size = ntohl(data_size);
     start += sizeof(long);
 
     data = (void*) start;
@@ -64,13 +67,10 @@ struct query {
       sizeof(void *);
   }
 
-  void *data_start() {
-    
-  }
-
   zmq::message_t generate_message() {
     zmq::message_t msg(get_total_size());
     long size = get_total_size();
+    std::printf("total size = %lu\n", size);
     mempcpy((void *) msg.data(), this, size);
     return msg;
   }
