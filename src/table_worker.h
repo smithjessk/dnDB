@@ -18,16 +18,12 @@ class table_worker {
   std::thread t;
   int port;
 
-  void process(query *q) {
-    switch (q->type) {
+  void process(query &q) {
+    switch (q.type) {
       case READ: {
-        char *result = (char*) malloc(32 * sizeof(char));
-        std::string id_as_string;
-        std::stringstream ss;
-        ss << q->id;
-        ss >> id_as_string;
-        strcpy(result, id_as_string.c_str());
-        q->data = result;
+        q.data_size = sizeof(long);
+        memcpy(q.data, &(q.id), sizeof(long));
+        q.successful = true;
         break;
       }
       default: {
@@ -41,9 +37,11 @@ class table_worker {
       zmq::message_t request;
       input_socket.recv(&request);
       query q((char *) request.data());
-      // process(q);
-      zmq::message_t reply(5);
-      memcpy ((void *) reply.data (), "World", 5);
+      process(q);
+      std::printf("data_size = %lu\n", q.data_size);
+      long temp = *((long *) q.data);
+      std::printf("long2 = %lu\n", temp);
+      zmq::message_t reply = q.generate_message();
       input_socket.send(reply);
     }
   };

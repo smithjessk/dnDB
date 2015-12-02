@@ -44,23 +44,18 @@ struct query {
   }
 
   query (char *start) {
-    std::printf("%p\n", start);
     id = *((long*) start);
     start += sizeof(long);
 
-    std::printf("%p\n", start);
     type = *((query_type*) start);
     start += sizeof(query_type);
 
-    std::printf("%p\n", start);
     successful = *((bool*) start);
     start += sizeof(bool);
 
-    std::printf("%p\n", start);
     data_size = *((long*) start);
     start += sizeof(long);
 
-    std::printf("%p\n", start);
     data = (void*) start;
   }
 
@@ -69,11 +64,15 @@ struct query {
       sizeof(void *);
   }
 
-  zmq::message_t generate_request() {
-    zmq::message_t request(get_total_size());
+  void *data_start() {
+    
+  }
+
+  zmq::message_t generate_message() {
+    zmq::message_t msg(get_total_size());
     long size = get_total_size();
-    mempcpy((void *) request.data(), this, size); 
-    return request;
+    mempcpy((void *) msg.data(), this, size);
+    return msg;
   }
 };
 

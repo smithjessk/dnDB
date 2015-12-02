@@ -47,14 +47,24 @@ void declare_routes(crow::SimpleApp &app) {
       table_connection *conn = manager.get_conn(table_name);
       long id = manager.get_next_query_id();
       query *q = new query(id, READ);
-      zmq::message_t request = q->generate_request();
+      zmq::message_t request = q->generate_message();
       std::unique_lock<std::mutex> lock(conn->mutex);
       conn->socket.send(request);
       zmq::message_t reply;
-      conn->socket.recv(&reply);
       delete q;
+      conn->socket.recv(&reply);
       lock.unlock();
-      return crow::response("POST /table/read");
+      query *response = new query((char *) reply.data());
+      std::printf("id = %lu\n", response->id);
+      std::printf("data_size = %lu\n", response->data_size);
+      std::printf("data = %lu\n", *((long *) response->data));
+      long returned_id = *((long *) response->data);
+      delete response;
+      std::string res;
+      std::stringstream ss;
+      ss << returned_id;
+      ss >> res;
+      return crow::response(res);
     } catch (int n) {
       return crow::response(400); // Bad request
     }
