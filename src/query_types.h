@@ -97,16 +97,4 @@ struct query {
   }
 };
 
-struct query_response {
-  uint32_t id;
-  bool successful;
-  char *data;
-
-  query_response(uint32_t id) {
-    this->id = id;
-    successful = false;
-    data = NULL;
-  }
-};
-
 #endif // QUERY_TYPES_H
