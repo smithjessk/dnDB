@@ -14,6 +14,8 @@ var options = {
   }
 };
 
+var numRequests = 0;
+
 var req = http.request(options, function(res) {
   console.log('STATUS: ' + res.statusCode);
   console.log('HEADERS: ' + JSON.stringify(res.headers));

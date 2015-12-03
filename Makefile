@@ -19,3 +19,7 @@ fancy:
 debug:
 	mkdir -p bin
 	$(CXX_FANCY) -o bin/server src/server.cc $(DEBUG_FLAGS) $(NORMAL_FLAGS)
+
+tests:
+	mkdir -p bin
+	$(CXX_FANCY) -o bin/test deps/jsoncpp.cpp test/test.cc $(NORMAL_FLAGS)
