@@ -68,6 +68,10 @@ struct query {
     this->data = s;
   }
 
+  void mark_successful() {
+    this->successful = true;
+  }
+
   uint32_t get_total_size() {
     return sizeof(uint32_t) + sizeof(query_type) + sizeof(bool) + sizeof(uint32_t) + data.size() + 1;
   }
