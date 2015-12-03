@@ -4,8 +4,6 @@
 
 #include "../deps/json/json.h"
 
-std::vector<std::string> table_names;
-
 void read_table(std::string table_name) {
   Json::Value root;
   root["table_name"] = table_name;
@@ -18,8 +16,6 @@ void read_table(std::string table_name) {
 }
 
 int main() {
-  table_names.push_back("one");
-  table_names.push_back("two");
   std::thread t1(read_table, "one");
   std::thread t2(read_table, "two");
   t1.join();

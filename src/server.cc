@@ -19,6 +19,22 @@
 
 worker_manager manager;
 
+bool contains_quote(std::string s) {
+  return s.find('"') != std::string::npos;
+}
+
+std::string build_update_string(std::string table_name, std::string col_name, 
+  int row_id, std::string value) {
+  std::string ret_value;
+  std::stringstream ss;
+  ss << "\"" << table_name << "\",";
+  ss << "\"" << col_name << "\",";
+  ss << "\"" << row_id << "\",";
+  ss << "\"" << value << "\"";
+  ss >> ret_value;
+  return ret_value;
+}
+
 void declare_routes(crow::SimpleApp &app) {
   CROW_ROUTE(app, "/ping")
   .methods("GET"_method)
@@ -37,7 +53,7 @@ void declare_routes(crow::SimpleApp &app) {
     uint32_t id = manager.get_next_query_id();
     query *q = new query(id, CREATE);
     q->set_data(table_name);
-
+    // manager.create_table(q);
     return crow::response{table_name};
   });
 
@@ -57,8 +73,8 @@ void declare_routes(crow::SimpleApp &app) {
       zmq::message_t request = q->generate_message();
       std::unique_lock<std::mutex> lock(conn->mutex);
       conn->socket.send(request);
-      zmq::message_t reply;
       delete q;
+      zmq::message_t reply;
       conn->socket.recv(&reply);
       lock.unlock();
       query *response = new query((char *) reply.data());
@@ -77,10 +93,34 @@ void declare_routes(crow::SimpleApp &app) {
     if (!body) {
       return crow::response(400);
     }
-    std::string table_name = body["table_name"].s();
-    std::ostringstream os;
-    os << table_name;
-    return crow::response{os.str()};
+    try {
+      std::string table_name = body["table_name"].s();
+      std::string col_name = body["col_name"].s();
+      int row_id = body["row_id"].i();
+      std::string value = body["value"].s();
+      if (contains_quote(table_name) || contains_quote(col_name) || 
+        contains_quote(value)) { // Test this!
+        return crow::response(400);
+      }
+      table_connection *conn = manager.get_conn(table_name);
+      uint32_t id = manager.get_next_query_id();
+      query *q = new query(id, UPDATE);
+      q->set_data(build_update_string(table_name, col_name, row_id, 
+        value));
+      zmq::message_t request = q->generate_message();
+      std::unique_lock<std::mutex> lock(conn->mutex);
+      conn->socket.send(request);
+      delete q;
+      zmq::message_t reply;
+      conn->socket.recv(&reply);
+      lock.unlock();
+      query *response = new query((char *) reply.data());
+      std::string data = response->data;
+      delete response;
+      return crow::response(data);
+    } catch (int n) {
+      return crow::response(400);
+    }
   });
 
   CROW_ROUTE(app, "/table/delete")

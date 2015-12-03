@@ -27,6 +27,11 @@ class table_worker {
         q.mark_successful();
         break;
       }
+      case UPDATE: {
+        q.set_data("UPDATE TABLE " + q.data);
+        q.mark_successful();
+        break;
+      }
       default: {
         break;
       }
