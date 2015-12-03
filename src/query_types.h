@@ -63,6 +63,11 @@ struct query {
     data = std::string(start, data_size);
   }
 
+  void set_data(std::string s) {
+    this->data_size = s.size();
+    this->data = s;
+  }
+
   uint32_t get_total_size() {
     return sizeof(uint32_t) + sizeof(query_type) + sizeof(bool) + sizeof(uint32_t) + data.size() + 1;
   }

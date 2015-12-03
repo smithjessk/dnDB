@@ -23,8 +23,7 @@ class table_worker {
   void process(query &q) {
     switch (q.type) {
       case READ: {
-        q.data = "test";
-        q.data_size = 4;
+        q.set_data("test");
         q.successful = true;
         break;
       }
