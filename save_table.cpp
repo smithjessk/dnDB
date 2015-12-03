@@ -7,8 +7,6 @@
 
 using namespace std;
 
-void save_table(unordered_map<string, unordered_map<int, string>> table);
-
 void save_table(){
 	ofstream save_file;
 	save_file.open("save.csv");
