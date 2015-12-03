@@ -5,14 +5,14 @@
 #include <algorithm>
 #include <string>
 
-using namespace std;
+
 
 void save_table(){
-	ofstream save_file;
+	std::ofstream save_file;
 	save_file.open("save.csv");
 	if(save_file.is_open()){
 		int counter = 0;
-		vector<int> keyValue;
+		std::vector<int> keyValue;
 
 		//save the names of the columns 
 		save_file << "_id,";
@@ -22,10 +22,10 @@ void save_table(){
 			if(counter < masterTable.size()){
 				save_file << ",";
 			}else{
-				save_file << endl;
+				save_file << std::endl;
 			}
 			//compile list of all the ids possible in the map
-			unordered_map<int, string> tempMap = colIt->second;
+			std::unordered_map<int, std::string> tempMap = colIt->second;
 			for(auto rowIt = tempMap.begin(); rowIt != tempMap.end(); ++rowIt){
 				keyValue.push_back(rowIt->first);
 			}
@@ -42,7 +42,7 @@ void save_table(){
 		while(counter < keyValue.size()){
 			save_file << keyValue[indexCounter] << ",";
 			for(auto colIt = masterTable.begin(); colIt != masterTable.end(); ++colIt){
-				unordered_map<int, string> row = colIt->second;
+				std::unordered_map<int, std::string> row = colIt->second;
 				for(auto rowIt = row.begin(); rowIt != row.end(); ++rowIt){
 					if(rowIt->first == keyValue[indexCounter]){
 						save_file << "\"" << rowIt->second << "\"";
@@ -60,7 +60,7 @@ void save_table(){
 				matchCounter = 0;
 			}
 			//new line for new id
-			save_file << endl;
+			save_file << std::endl;
 			indexCounter++;
 			counter++;
 		}
