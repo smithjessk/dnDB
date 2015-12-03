@@ -84,12 +84,6 @@ struct query {
     ptr += sizeof(uint32_t);
 
     memcpy((void *) ptr, data.c_str(), data_size);
-    
-    bool *bool_begin = (bool *) ((char *)(msg.data()) + sizeof(uint32_t) + 
-      sizeof(query_type));
-    char *data_begin = ((char*) bool_begin) + sizeof(bool) + sizeof(uint32_t);
-    std::string s(data_begin, data_size);
-    std::cout << "s = " << s << std::endl;
     return msg;
   }
 };

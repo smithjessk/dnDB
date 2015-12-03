@@ -24,6 +24,7 @@ class table_worker {
     switch (q.type) {
       case READ: {
         q.data = "test";
+        q.data_size = 4;
         q.successful = true;
         break;
       }
@@ -37,9 +38,8 @@ class table_worker {
     while (!done) {
       zmq::message_t request;
       input_socket.recv(&request);
-      // test t((char *) request.data());
       query q((char *) request.data());
-      // process(q);
+      process(q);
       zmq::message_t reply = q.generate_message();
       input_socket.send(reply);
     }

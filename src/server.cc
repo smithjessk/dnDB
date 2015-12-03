@@ -52,28 +52,16 @@ void declare_routes(crow::SimpleApp &app) {
       q->data = "def";
       q->data_size = 3;
       zmq::message_t request = q->generate_message();
-      std::cout << "generated message" << std::endl;
-      char *ptr = (char*) request.data();
-      std::cout << "_sid = " << *((uint32_t*) ptr) << std::endl;
-      ptr = ptr + sizeof(uint32_t) + sizeof(query_type) + sizeof(bool);
-      std::cout << "_sdata_size = " << ntohl(*((uint32_t*) ptr)) << std::endl;
-      // uint32_t size = ntohl(*((uint32_t *) ptr));
-      ptr = ptr + sizeof(uint32_t);      
-      std::string s(ptr);
-      std::cout << "s = " << s << std::endl;
       std::unique_lock<std::mutex> lock(conn->mutex);
       conn->socket.send(request);
       zmq::message_t reply;
       delete q;
       conn->socket.recv(&reply);
       lock.unlock();
-      std::cout << "Got reply" << std::endl;
       query *response = new query((char *) reply.data());
-      std::printf("id = %u\n", response->id);
       std::string data = response->data;
-      std::printf("data = %s\n", data.c_str());
       delete response;
-      return crow::response("asdas");
+      return crow::response(data);
     } catch (int n) {
       return crow::response(400); // Bad request
     }
