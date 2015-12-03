@@ -48,28 +48,30 @@ void declare_routes(crow::SimpleApp &app) {
       std::string table_name = body["table_name"].s();
       table_connection *conn = manager.get_conn(table_name);
       long id = manager.get_next_query_id();
-      /*query *q = new query(id, READ);
-      q->data = "abc";*/
-      test *t = new test();
-      t->data[0] = 'a';
-      zmq::message_t request = t->generate_message();
-      /*std::cout << "generated message" << std::endl;
-      char *temp = (char *)request.data() + sizeof(long) + sizeof(bool) + 
-        sizeof(query_type);
-      */
+      query *q = new query(id, READ);
+      q->data = "def";
+      q->data_size = 3;
+      zmq::message_t request = q->generate_message();
+      std::cout << "generated message" << std::endl;
+      char *ptr = (char*) request.data();
+      std::cout << "_sid = " << *((long*) ptr) << std::endl;
+      ptr = ptr + sizeof(long) + sizeof(query_type) + sizeof(bool);
+      std::cout << "_sdata_size = " << ntohl(*((long*) ptr)) << std::endl;
+      // long size = ntohl(*((long *) ptr));
+      ptr = ptr + sizeof(long);      
+      std::string s(ptr);
+      std::cout << "s = " << s << std::endl;
       std::unique_lock<std::mutex> lock(conn->mutex);
       conn->socket.send(request);
       zmq::message_t reply;
-      delete t;
+      delete q;
       conn->socket.recv(&reply);
       lock.unlock();
       std::cout << "Got reply" << std::endl;
-      /*query *response = new query((char *) reply.data());
+      query *response = new query((char *) reply.data());
       std::printf("id = %lu\n", response->id);
       std::string data = response->data;
-      std::printf("data = %s\n", data.c_str());*/
-      test *response = new test((char *) reply.data());
-      std::cout << "first char: " << response->data[0] << std::endl;
+      std::printf("data = %s\n", data.c_str());
       delete response;
       return crow::response("asdas");
     } catch (int n) {

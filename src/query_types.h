@@ -52,12 +52,14 @@ struct query {
   long id;
   query_type type;
   bool successful;
+  long data_size = 0;
   std::string data;
 
   query (long id, query_type qt) {
     this->id = id;
     this->type = qt;
     this->successful = false;
+    this->data_size = 0;
     this->data = "";
   }
 
@@ -77,8 +79,13 @@ struct query {
 
     std::cout << "successful = " << successful << std::endl;
 
-    data = *((std::string *) start);
+    data_size = *((long *) start);
+    data_size = ntohl(data_size);
+    start += sizeof(long);
 
+    std::cout << "data_size = " << data_size << std::endl;
+
+    data = std::string(start, data_size);
     std::cout << "data = " << data << std::endl;
   }
 
@@ -88,9 +95,16 @@ struct query {
 
   zmq::message_t generate_message() {
     zmq::message_t msg(get_total_size());
-    long size = get_total_size();
-    std::printf("total size = %lu\n", size);
-    mempcpy((void *) msg.data(), this, size);
+    memcpy((void *) msg.data(), this, get_total_size());
+    char *begin = (char *) msg.data();
+    char *loc_of_data = begin + 2 * sizeof(long) + sizeof(query_type) +
+      sizeof(bool);
+    memcpy((void *) loc_of_data, data.c_str(), data_size);
+    bool *bool_begin = (bool *) (begin + sizeof(long) + sizeof(query_type));
+    char *data_begin = ((char*) bool_begin) + sizeof(bool) + sizeof(long);
+    std::string s(data_begin, data_size);
+    std::cout << "s = " << s << std::endl;
+    std::cout << "first char = " << (int) s[0] << std::endl;
     return msg;
   }
 };

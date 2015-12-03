@@ -37,13 +37,11 @@ class table_worker {
     while (!done) {
       zmq::message_t request;
       input_socket.recv(&request);
-      test t((char *) request.data());
-      std::cout << t.data[0] << std::endl;
+      // test t((char *) request.data());
+      query q((char *) request.data());
       // process(q);
-      zmq::message_t reply = t.generate_message();
-      std::cout << "size = " << reply.size() << std::endl;
+      zmq::message_t reply = q.generate_message();
       input_socket.send(reply);
-      std::cout << "sent fine" << std::endl;
     }
   };
 
