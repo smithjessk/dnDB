@@ -34,6 +34,10 @@ void declare_routes(crow::SimpleApp &app) {
       return crow::response(400); // Bad request
     }
     std::string table_name = body["table_name"].s();
+    uint32_t id = manager.get_next_query_id();
+    query *q = new query(id, CREATE);
+    q->set_data(table_name);
+
     return crow::response{table_name};
   });
 
@@ -49,7 +53,7 @@ void declare_routes(crow::SimpleApp &app) {
       table_connection *conn = manager.get_conn(table_name);
       uint32_t id = manager.get_next_query_id();
       query *q = new query(id, READ);
-      q->set_data("def");
+      q->set_data(table_name);
       zmq::message_t request = q->generate_message();
       std::unique_lock<std::mutex> lock(conn->mutex);
       conn->socket.send(request);
@@ -91,6 +95,9 @@ int main() {
   table_worker tw1("one", 5555);
   table_connection tc1(5555);
   manager.add(&tw1, &tc1);
+  table_worker tw2("two", 5556);
+  table_connection tc2(5556);
+  manager.add(&tw2, &tc2);
   declare_routes(app);
-  app.port(8080).run();
+  app.port(8080).multithreaded().run();
 }
