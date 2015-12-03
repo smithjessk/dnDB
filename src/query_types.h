@@ -30,32 +30,14 @@ struct table_connection {
 
 enum query_type {CREATE, READ, UPDATE, DELETE};
 
-struct test {
-  char *data;
-
-  test () {
-    data = (char *)malloc(512);
-  }
-
-  test (char *start) {
-    mempcpy(this, start, 512);
-  }
-
-  zmq::message_t generate_message() {
-    zmq::message_t msg(512);
-    mempcpy((void *) msg.data(), this, 512);
-    return msg;
-  }
-};
-
 struct query {
-  long id;
+  uint32_t id;
   query_type type;
   bool successful;
-  long data_size = 0;
+  uint32_t data_size = 0;
   std::string data;
 
-  query (long id, query_type qt) {
+  query (uint32_t id, query_type qt) {
     this->id = id;
     this->type = qt;
     this->successful = false;
@@ -64,57 +46,60 @@ struct query {
   }
 
   query (char *start) {
-    id = *((long*) start);
-    start += sizeof(long);
-
-    std::cout << "id = " << id << std::endl;
+    id = *((uint32_t*) start);
+    start += sizeof(uint32_t);
 
     type = *((query_type*) start);
     start += sizeof(query_type);
 
-    std::cout << "type = " << type << std::endl;
-
     successful = *((bool*) start);
     start += sizeof(bool);
 
-    std::cout << "successful = " << successful << std::endl;
-
-    data_size = *((long *) start);
-    data_size = ntohl(data_size);
-    start += sizeof(long);
-
-    std::cout << "data_size = " << data_size << std::endl;
+    uint8_t *temp_ptr = (uint8_t *) start;
+    data_size = (temp_ptr[0]<<0) | (temp_ptr[1]<<8) | (temp_ptr[2]<<16) | 
+      (temp_ptr[3]<<24);
+    start += sizeof(uint32_t);
 
     data = std::string(start, data_size);
-    std::cout << "data = " << data << std::endl;
   }
 
-  long get_total_size() {
-    return sizeof(long) + sizeof(query_type) + sizeof(bool) + data.size() + 1;
+  uint32_t get_total_size() {
+    return sizeof(uint32_t) + sizeof(query_type) + sizeof(bool) + sizeof(uint32_t) + data.size() + 1;
   }
 
   zmq::message_t generate_message() {
     zmq::message_t msg(get_total_size());
-    memcpy((void *) msg.data(), this, get_total_size());
-    char *begin = (char *) msg.data();
-    char *loc_of_data = begin + 2 * sizeof(long) + sizeof(query_type) +
-      sizeof(bool);
-    memcpy((void *) loc_of_data, data.c_str(), data_size);
-    bool *bool_begin = (bool *) (begin + sizeof(long) + sizeof(query_type));
-    char *data_begin = ((char*) bool_begin) + sizeof(bool) + sizeof(long);
+    char *ptr = (char *) msg.data();
+
+    memcpy((void *) ptr, &(this->id), sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+
+    memcpy((void *) ptr, &(this->type), sizeof(query_type));
+    ptr += sizeof(query_type);
+
+    memcpy((void *) ptr, &(this->successful), sizeof(bool));
+    ptr += sizeof(bool);
+
+    memcpy((void *) ptr, &(this->data_size), sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+
+    memcpy((void *) ptr, data.c_str(), data_size);
+    
+    bool *bool_begin = (bool *) ((char *)(msg.data()) + sizeof(uint32_t) + 
+      sizeof(query_type));
+    char *data_begin = ((char*) bool_begin) + sizeof(bool) + sizeof(uint32_t);
     std::string s(data_begin, data_size);
     std::cout << "s = " << s << std::endl;
-    std::cout << "first char = " << (int) s[0] << std::endl;
     return msg;
   }
 };
 
 struct query_response {
-  long id;
+  uint32_t id;
   bool successful;
   char *data;
 
-  query_response(long id) {
+  query_response(uint32_t id) {
     this->id = id;
     successful = false;
     data = NULL;

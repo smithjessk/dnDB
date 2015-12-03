@@ -1,5 +1,6 @@
 # Sublime
-*dnDB*
+*.sublime-project
+*.sublime-workspace
 
 # Compiled Object files
 *.slo

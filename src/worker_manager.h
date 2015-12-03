@@ -12,7 +12,7 @@ class worker_manager {
   std::unordered_map<std::string, table_worker*> workers;
   std::unordered_map<long, query*> queries;
 
-  long queries_filed;
+  uint32_t queries_filed;
 
   std::unordered_map<std::string, table_connection*> conns;
 
@@ -23,17 +23,13 @@ class worker_manager {
     queries_filed = 0;
   };
 
-  long get_next_query_id() {
+  uint32_t get_next_query_id() {
     return queries_filed++;
   }
 
   void add(table_worker *tw, table_connection *tc) {
     workers[tw->get_table_name()] = tw;
     conns[tw->get_table_name()] = tc;
-  }
-  
-  query *get_query_pointer(long id) {
-    return queries[id];
   }
 
   table_connection *get_conn(std::string name) {

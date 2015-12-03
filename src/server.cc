@@ -47,18 +47,18 @@ void declare_routes(crow::SimpleApp &app) {
     try {
       std::string table_name = body["table_name"].s();
       table_connection *conn = manager.get_conn(table_name);
-      long id = manager.get_next_query_id();
+      uint32_t id = manager.get_next_query_id();
       query *q = new query(id, READ);
       q->data = "def";
       q->data_size = 3;
       zmq::message_t request = q->generate_message();
       std::cout << "generated message" << std::endl;
       char *ptr = (char*) request.data();
-      std::cout << "_sid = " << *((long*) ptr) << std::endl;
-      ptr = ptr + sizeof(long) + sizeof(query_type) + sizeof(bool);
-      std::cout << "_sdata_size = " << ntohl(*((long*) ptr)) << std::endl;
-      // long size = ntohl(*((long *) ptr));
-      ptr = ptr + sizeof(long);      
+      std::cout << "_sid = " << *((uint32_t*) ptr) << std::endl;
+      ptr = ptr + sizeof(uint32_t) + sizeof(query_type) + sizeof(bool);
+      std::cout << "_sdata_size = " << ntohl(*((uint32_t*) ptr)) << std::endl;
+      // uint32_t size = ntohl(*((uint32_t *) ptr));
+      ptr = ptr + sizeof(uint32_t);      
       std::string s(ptr);
       std::cout << "s = " << s << std::endl;
       std::unique_lock<std::mutex> lock(conn->mutex);
@@ -69,7 +69,7 @@ void declare_routes(crow::SimpleApp &app) {
       lock.unlock();
       std::cout << "Got reply" << std::endl;
       query *response = new query((char *) reply.data());
-      std::printf("id = %lu\n", response->id);
+      std::printf("id = %u\n", response->id);
       std::string data = response->data;
       std::printf("data = %s\n", data.c_str());
       delete response;
