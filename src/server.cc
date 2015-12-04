@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 
+#include "config_reader.h"
 #include "table_worker.h"
 #include "worker_manager.h"
 #include "../deps/crow_all.h"
@@ -118,7 +119,7 @@ void declare_routes(crow::SimpleApp &app) {
   });
 }
 
-int main() {
+int main(int argc, char** argv) {
   crow::SimpleApp app;
   table_worker tw1("one", 5555);
   table_connection tc1(5555);
@@ -128,4 +129,13 @@ int main() {
   manager.add(&tw2, &tc2);
   declare_routes(app);
   app.port(8080).multithreaded().run();
+  
+  unordered_map map = read(argv[1]);
+  unordered_map<string, string>::iterator it = map.begin();
+  it++;
+  string value1 = it->second;
+  it++;
+  string value2 = it->second;
+  it++;
+  string value3 = it->second;
 }
