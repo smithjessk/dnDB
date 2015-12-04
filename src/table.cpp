@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <cmath>
 
 class Table {
     public:
@@ -12,7 +13,7 @@ class Table {
         std::unordered_map<std::string, std::unordered_map<int, std::string> > masterTable;
         Table(std::string filepath);
         //void addRow(std::string); do we need?
-        void addRow(int, std::string);
+        void addRowGivenID(int, std::string);
         void addRow(std::string);
         void addColumn(std::string);
         void removeRow(int);
@@ -24,9 +25,20 @@ class Table {
         void save_table(std::string fileName);
 };
 
+void print(std::vector<std::string> v){
+    for(auto i=0;i<v.size();i++){
+        std::cout<<v[i];
+        if(i<v.size()-1){
+            std::cout<<",";
+        }
+    }
+    std::cout<<std::endl;
+}
+
 bool is_number(const std::string& s) {
     return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) { return !std::isdigit(c); }) == s.end();
 }
+
 
 std::vector<std::string> split(std::string s){
     std::vector<std::string> result;
@@ -38,10 +50,8 @@ std::vector<std::string> split(std::string s){
     }
     return result;
 }
-void Table::addRow(std::string CSV){
-    addRow(maxID,CSV);
-}
-void Table::addRow(int id, std::string CSV){
+
+void Table::addRowGivenID(int id, std::string CSV){
     std::vector<std::string> rows;
     std::vector<std::string> cols = getColNames();
 
@@ -50,9 +60,9 @@ void Table::addRow(int id, std::string CSV){
     //FOO MUST BE SORTED BY COLS (Corresponding column to parsed value aka name:"jess", age:"14")
     //THROW EXCEPTION IF SIZE MISMATCH
 
-    if (rows.size() != cols.size()) {
+    /*if (rows.size()+1 != cols.size()) {
         throw "Row/column size mismatch";
-    }
+    }*/
     //std::reverse(rows.begin(),rows.end());
     std::reverse(cols.begin(),cols.end());
     int cnt=0;
@@ -60,11 +70,43 @@ void Table::addRow(int id, std::string CSV){
         masterTable[k][id]=rows.at(cnt);
         cnt++;
     }
+
+    maxID = std::max(id,maxID);
     maxID++;
+
+    std::cout<<id<<std::endl;
 }
 
+void Table::addRow(std::string CSV){
+    std::vector<std::string> row = split(CSV);
+    std::cout<<row.at(0);
+    if(row.size()==0){
+        std::cout<<"error1";
+    }
+    if(row[0].size()==0){
+        std::cout<<"error2";
+    }
+    if(row[0].substr(0,1)=="\""){
+        std::stringstream ss;
+        ss << maxID;
+        std::string idString;
+        ss >> idString;
+        CSV=idString+","+CSV;
+        addRowGivenID(maxID,CSV);
+        return;
+    }else if(!is_number(row[0])){
+        std::cout<<"error3";
+    }
+
+}
+
+
 void Table::addColumn(std::string colName){
+    std::vector<std::string> cols = getColNames();
     masterTable[colName];
+    for(auto k:cols){
+        masterTable[k];
+    }
 }
 
 void Table::removeRow(int id){
@@ -167,7 +209,7 @@ Table::Table(std::string fileName) {
             std::stringstream ss;
             ss<<id;
             ss>>value;
-            addRow(value, line);
+            addRowGivenID(value, line);
             //std::cout<<value<<std::endl;
         }
 
@@ -188,7 +230,7 @@ void Table::save_table(std::string fileName){
     std::vector<std::string> colValues;
 
     //save the names of the columns
-    save_file << "_id,";
+    //save_file << "_id,";
     for(auto colIt = masterTable.begin(); colIt != masterTable.end(); ++colIt){
         colValues.push_back(colIt->first);
         /*save_file << colIt->first;
@@ -199,6 +241,7 @@ void Table::save_table(std::string fileName){
             save_file << std::endl;
         }
         */
+
         //compile list of all the ids possible in the map
         std::unordered_map<int, std::string> tempMap = colIt->second;
         for(auto rowIt = tempMap.begin(); rowIt != tempMap.end(); ++rowIt){
@@ -219,14 +262,13 @@ void Table::save_table(std::string fileName){
     sort(keyValue.begin(), keyValue.end());
     keyValue.erase(unique(keyValue.begin(), keyValue.end() ), keyValue.end());
 
-    //std::reverse(keyValue.begin(),keyValue.end());
+    //xstd::reverse(keyValue.begin(),keyValue.end());
 
     //save the values of each row
     counter = 0;
     int indexCounter = 0;
     int matchCounter = 0;
     while(counter < keyValue.size()){
-        save_file << keyValue[indexCounter] << ",";
         for(auto colIt = masterTable.begin(); colIt != masterTable.end(); ++colIt){
             std::unordered_map<int, std::string> row = colIt->second;
             for(auto rowIt = row.begin(); rowIt != row.end(); ++rowIt){
@@ -256,22 +298,4 @@ void Table::save_table(std::string fileName){
         counter++;
     }
     save_file.close();
-}
-
-void print(std::vector<std::string> v){
-    for(auto i=0;i<v.size();i++){
-        std::cout<<v[i];
-        if(i<v.size()-1){
-            std::cout<<",";
-        }
-    }
-    std::cout<<std::endl;
-}
-int main(){
-    Table table("table.csv");
-    //table.addColumn("\"newColumn\"");
-    //table.addRow(5,"5,\"James\",\"16\",y");
-    table.addRow(77,"66,\"James\",\"16\"");
-    //print(table.getRow(5));
-    table.save_table("save.csv");
 }
