@@ -85,13 +85,9 @@ void declare_routes(crow::SimpleApp &app) {
     try {
 
       std::string table_name = body["table_name"].s();
-      std::cout << "INSIDE HERE" << std::endl;
       std::string col_name = body["col_name"].s();
-      std::cout << "INSIDE HERE" << std::endl;
       int row_id = body["row_id"].i();
-      std::cout << "INSIDE HERE" << std::endl;
       std::string value = body["value"].s();
-      std::cout << "INSIDE HERE" << std::endl;
       if (contains_quote(table_name) || contains_quote(col_name) || 
         contains_quote(value)) { // Test this!
         return crow::response(400);
