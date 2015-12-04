@@ -83,10 +83,15 @@ void declare_routes(crow::SimpleApp &app) {
       return crow::response(400);
     }
     try {
+      
       std::string table_name = body["table_name"].s();
+      std::cout << "INSIDE HERE" << std::endl;
       std::string col_name = body["col_name"].s();
+      std::cout << "INSIDE HERE" << std::endl;
       int row_id = body["row_id"].i();
+      std::cout << "INSIDE HERE" << std::endl;
       std::string value = body["value"].s();
+      std::cout << "INSIDE HERE" << std::endl;
       if (contains_quote(table_name) || contains_quote(col_name) || 
         contains_quote(value)) { // Test this!
         return crow::response(400);
@@ -120,22 +125,30 @@ void declare_routes(crow::SimpleApp &app) {
 }
 
 int main(int argc, char** argv) {
+  int port, number_initial_tables, initial_table_port;
+  try {
+    std::unordered_map<std::string, std::string> map = read(argv[1]);
+    port = stoi(map.at("host_port"));
+    number_initial_tables = stoi(map.at("number_initial_tables"));
+    initial_table_port = stoi(map.at("initial_table_port"));
+  } catch (int n) {
+    std::cout << "Could not read config file. Using defaults" << std::endl;
+    port = 8080;
+    number_initial_tables = 10;
+    initial_table_port = 5555;
+    return 1;
+  }
+  manager.set_port(initial_table_port);
+  manager.set_initial_size(number_initial_tables);
   crow::SimpleApp app;
-  table_worker tw1("one", 5555);
-  table_connection tc1(5555);
+  int socket_port = manager.get_next_port();
+  table_worker tw1("one", socket_port);
+  table_connection tc1(socket_port);
   manager.add(&tw1, &tc1);
-  table_worker tw2("two", 5556);
-  table_connection tc2(5556);
+  socket_port = manager.get_next_port();
+  table_worker tw2("two", socket_port);
+  table_connection tc2(socket_port);
   manager.add(&tw2, &tc2);
   declare_routes(app);
-  app.port(8080).multithreaded().run();
-  
-  unordered_map map = read(argv[1]);
-  unordered_map<string, string>::iterator it = map.begin();
-  it++;
-  string value1 = it->second;
-  it++;
-  string value2 = it->second;
-  it++;
-  string value3 = it->second;
+  app.port(port).multithreaded().run();
 }
