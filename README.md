@@ -1,5 +1,5 @@
 # dnDB
-Deez Nuts DB
+Distributed Nutmeg Database
 
 ## Dependencies
 ### Packaged:
