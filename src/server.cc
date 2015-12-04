@@ -140,6 +140,36 @@ void declare_routes(crow::SimpleApp &app) {
       return crow::response(400);
     }
   });
+
+  CROW_ROUTE(app, "/table/sql")
+  .methods("POST"_method)
+  ([](const crow::request &req) {
+    auto body = crow::json::load(req.body);
+    if (!body) {
+      return crow::response(400);
+    }
+    try {
+      std::string statement = body["statement"].s();
+      // struct stmt = parse(statement);
+      /*table_connection *conn = manager.get_conn(table_name);
+      uint32_t id = manager.get_next_query_id();
+      query *q = new query(id, DELETE);
+      q->set_data(table_name);
+      zmq::message_t request = q->generate_message();
+      std::unique_lock<std::mutex> lock(conn->mutex);
+      conn->socket.send(request);
+      delete q;
+      zmq::message_t reply;
+      conn->socket.recv(&reply);
+      lock.unlock();
+      query *response = new query((char *) reply.data());
+      std::string data = response->data;
+      delete response;*/
+      return crow::response(statement);
+    } catch (int n) {
+      return crow::response(400);
+    }
+  });
 }
 
 int main(int argc, char** argv) {
@@ -157,7 +187,6 @@ int main(int argc, char** argv) {
   }
   manager.set_initial_size(number_initial_tables);
   crow::SimpleApp app;
-
   int socket_port = initial_table_port;
   table_worker tw1("one", socket_port);
   table_connection tc1(tw1.get_port());

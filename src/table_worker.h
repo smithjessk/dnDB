@@ -39,6 +39,11 @@ class table_worker {
         q.mark_successful();
         break;
       }
+      case SQL: {
+        q.set_data("SQL TABLE " + q.data);
+        q.mark_successful();
+        break;
+      }
       default: {
         break;
       }
