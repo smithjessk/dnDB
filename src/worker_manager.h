@@ -9,11 +9,8 @@
 
 class worker_manager {
  private:
-  std::unordered_map<std::string, table_worker*> workers;
-  std::unordered_map<long, query*> queries;
-
   uint32_t queries_filed;
-
+  std::unordered_map<std::string, table_worker*> workers;
   std::unordered_map<std::string, table_connection*> conns;
 
  public:
