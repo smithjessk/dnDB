@@ -54,37 +54,39 @@ std::vector<std::string> split(std::string s){
 void Table::addRowGivenID(int id, std::string CSV){
     std::vector<std::string> rows;
     std::vector<std::string> cols = getColNames();
+    std::cout<<CSV<<std::endl;
 
     rows=split(CSV);
 
     //FOO MUST BE SORTED BY COLS (Corresponding column to parsed value aka name:"jess", age:"14")
     //THROW EXCEPTION IF SIZE MISMATCH
 
-    /*if (rows.size()+1 != cols.size()) {
-        throw "Row/column size mismatch";
-    }*/
-    //std::reverse(rows.begin(),rows.end());
+    if (rows.size() != cols.size()) {
+        std::cout<< "Row/column size mismatch"<<std::endl;
+        return;
+    }
+
     std::reverse(cols.begin(),cols.end());
+
     int cnt=0;
     for(auto k:cols){
-        masterTable[k][id]=rows.at(cnt);
+        masterTable[k][id]=rows[cnt];
         cnt++;
     }
 
     maxID = std::max(id,maxID);
     maxID++;
-
-    std::cout<<id<<std::endl;
 }
 
 void Table::addRow(std::string CSV){
     std::vector<std::string> row = split(CSV);
-    std::cout<<row.at(0);
     if(row.size()==0){
         std::cout<<"error1";
+        return;
     }
     if(row[0].size()==0){
         std::cout<<"error2";
+        return;
     }
     if(row[0].substr(0,1)=="\""){
         std::stringstream ss;
@@ -96,17 +98,22 @@ void Table::addRow(std::string CSV){
         return;
     }else if(!is_number(row[0])){
         std::cout<<"error3";
+        return;
+    }else{
+        int id = std::atoi(row[0].c_str());
+        addRowGivenID(id,CSV);
     }
-
 }
 
 
 void Table::addColumn(std::string colName){
-    std::vector<std::string> cols = getColNames();
+    //std::vector<std::string> cols = getColNames();
+    //std::unordered_map<int,std::string> empt = {{0,""}};
     masterTable[colName];
-    for(auto k:cols){
+    /*for(auto k:cols){
         masterTable[k];
     }
+    */
 }
 
 void Table::removeRow(int id){
@@ -199,6 +206,7 @@ Table::Table(std::string fileName) {
         }
         //regular rows
         else {
+            /*
             std::string id = line.substr(0, comma);
             if (!is_number(id)) {
                 std::string error = "ERROR: id " + id + " not an int";
@@ -209,7 +217,9 @@ Table::Table(std::string fileName) {
             std::stringstream ss;
             ss<<id;
             ss>>value;
-            addRowGivenID(value, line);
+            //addRowGivenID(value, line);
+            */
+            addRow(line);
             //std::cout<<value<<std::endl;
         }
 
@@ -227,6 +237,7 @@ void Table::save_table(std::string fileName){
 
     int counter = 0;
     std::vector<int> keyValue;
+    //added this so i can read to it from the mastertable, so that saving header line to file is in right order.
     std::vector<std::string> colValues;
 
     //save the names of the columns
@@ -249,6 +260,8 @@ void Table::save_table(std::string fileName){
         }
     }
     reverse(colValues.begin(),colValues.end());
+    //including or excluding the above line does not change the output
+
     for(auto colIt = colValues.begin(); colIt != colValues.end(); ++colIt){
         save_file << *colIt;
         counter++;
@@ -262,7 +275,8 @@ void Table::save_table(std::string fileName){
     sort(keyValue.begin(), keyValue.end());
     keyValue.erase(unique(keyValue.begin(), keyValue.end() ), keyValue.end());
 
-    //xstd::reverse(keyValue.begin(),keyValue.end());
+    //std::reverse(keyValue.begin(),keyValue.end());
+    //remove cuz using this would reverse the row order.
 
     //save the values of each row
     counter = 0;
@@ -298,4 +312,20 @@ void Table::save_table(std::string fileName){
         counter++;
     }
     save_file.close();
+}
+
+
+int main(){
+    Table table("table.csv");
+    //table.addColumn("\"newColumn\"");
+    //table.addRow(5,"5,\"James\",\"16\",y");
+    //table.addColumn("\"name\"");
+    table.addRow("77,\"James\",\"16\",\"none\"");
+    table.addRow("\"Kevin\",\"44\",\"fries\"");
+    table.addColumn("newColumn");
+    //table.addColumn("z");
+    //print(table.getRow(5));
+
+
+    table.save_table("save.csv");
 }
