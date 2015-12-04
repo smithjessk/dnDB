@@ -83,7 +83,7 @@ void declare_routes(crow::SimpleApp &app) {
       return crow::response(400);
     }
     try {
-      
+
       std::string table_name = body["table_name"].s();
       std::cout << "INSIDE HERE" << std::endl;
       std::string col_name = body["col_name"].s();
@@ -136,7 +136,6 @@ int main(int argc, char** argv) {
     port = 8080;
     number_initial_tables = 10;
     initial_table_port = 5555;
-    return 1;
   }
   manager.set_port(initial_table_port);
   manager.set_initial_size(number_initial_tables);
