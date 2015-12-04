@@ -83,7 +83,6 @@ void declare_routes(crow::SimpleApp &app) {
       return crow::response(400);
     }
     try {
-
       std::string table_name = body["table_name"].s();
       std::string col_name = body["col_name"].s();
       int row_id = body["row_id"].i();
@@ -114,9 +113,32 @@ void declare_routes(crow::SimpleApp &app) {
   });
 
   CROW_ROUTE(app, "/table/delete")
-  .methods("DELETE"_method) 
+  .methods("POST"_method) 
   ([](const crow::request &req) {
-    return crow::response("DELETE /table/delete");
+    auto body = crow::json::load(req.body);
+    if (!body) {
+      return crow::response(400);
+    }
+    try {
+      std::string table_name = body["table_name"].s();
+      table_connection *conn = manager.get_conn(table_name);
+      uint32_t id = manager.get_next_query_id();
+      query *q = new query(id, DELETE);
+      q->set_data(table_name);
+      zmq::message_t request = q->generate_message();
+      std::unique_lock<std::mutex> lock(conn->mutex);
+      conn->socket.send(request);
+      delete q;
+      zmq::message_t reply;
+      conn->socket.recv(&reply);
+      lock.unlock();
+      query *response = new query((char *) reply.data());
+      std::string data = response->data;
+      delete response;
+      return crow::response(data);
+    } catch (int n) {
+      return crow::response(400);
+    }
   });
 }
 

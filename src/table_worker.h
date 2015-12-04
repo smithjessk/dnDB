@@ -32,6 +32,11 @@ class table_worker {
         q.mark_successful();
         break;
       }
+      case DELETE: {
+        q.set_data("DELETE TABLE " + q.data);
+        q.mark_successful();
+        break;
+      }
       default: {
         break;
       }
