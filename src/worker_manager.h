@@ -30,7 +30,7 @@ class worker_manager {
   }
 
   table_connection *get_conn(std::string name) {
-    return conns[name];
+    return conns.at(name);
   }
 };
 
