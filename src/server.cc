@@ -155,14 +155,14 @@ int main(int argc, char** argv) {
     number_initial_tables = 10;
     initial_table_port = 5555;
   }
-  manager.set_port(initial_table_port);
   manager.set_initial_size(number_initial_tables);
   crow::SimpleApp app;
-  int socket_port = manager.get_next_port();
+
+  int socket_port = initial_table_port;
   table_worker tw1("one", socket_port);
-  table_connection tc1(socket_port);
+  table_connection tc1(tw1.get_port());
   manager.add(&tw1, &tc1);
-  socket_port = manager.get_next_port();
+  socket_port = tw1.get_port() + 1;
   table_worker tw2("two", socket_port);
   table_connection tc2(socket_port);
   manager.add(&tw2, &tc2);
