@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 
+#include "config_reader.h"
 #include "table_worker.h"
 #include "worker_manager.h"
 #include "../deps/crow_all.h"
@@ -112,20 +113,88 @@ void declare_routes(crow::SimpleApp &app) {
   });
 
   CROW_ROUTE(app, "/table/delete")
-  .methods("DELETE"_method) 
+  .methods("POST"_method) 
   ([](const crow::request &req) {
-    return crow::response("DELETE /table/delete");
+    auto body = crow::json::load(req.body);
+    if (!body) {
+      return crow::response(400);
+    }
+    try {
+      std::string table_name = body["table_name"].s();
+      table_connection *conn = manager.get_conn(table_name);
+      uint32_t id = manager.get_next_query_id();
+      query *q = new query(id, DELETE);
+      q->set_data(table_name);
+      zmq::message_t request = q->generate_message();
+      std::unique_lock<std::mutex> lock(conn->mutex);
+      conn->socket.send(request);
+      delete q;
+      zmq::message_t reply;
+      conn->socket.recv(&reply);
+      lock.unlock();
+      query *response = new query((char *) reply.data());
+      std::string data = response->data;
+      delete response;
+      return crow::response(data);
+    } catch (int n) {
+      return crow::response(400);
+    }
+  });
+
+  CROW_ROUTE(app, "/table/sql")
+  .methods("POST"_method)
+  ([](const crow::request &req) {
+    auto body = crow::json::load(req.body);
+    if (!body) {
+      return crow::response(400);
+    }
+    try {
+      std::string statement = body["statement"].s();
+      // struct stmt = parse(statement);
+      /*table_connection *conn = manager.get_conn(table_name);
+      uint32_t id = manager.get_next_query_id();
+      query *q = new query(id, DELETE);
+      q->set_data(table_name);
+      zmq::message_t request = q->generate_message();
+      std::unique_lock<std::mutex> lock(conn->mutex);
+      conn->socket.send(request);
+      delete q;
+      zmq::message_t reply;
+      conn->socket.recv(&reply);
+      lock.unlock();
+      query *response = new query((char *) reply.data());
+      std::string data = response->data;
+      delete response;*/
+      return crow::response(statement);
+    } catch (int n) {
+      return crow::response(400);
+    }
   });
 }
 
-int main() {
+int main(int argc, char** argv) {
+  int port, number_initial_tables, initial_table_port;
+  try {
+    std::unordered_map<std::string, std::string> map = read(argv[1]);
+    port = stoi(map.at("host_port"));
+    number_initial_tables = stoi(map.at("number_initial_tables"));
+    initial_table_port = stoi(map.at("initial_table_port"));
+  } catch (int n) {
+    std::cout << "Could not read config file. Using defaults" << std::endl;
+    port = 8080;
+    number_initial_tables = 10;
+    initial_table_port = 5555;
+  }
+  manager.set_initial_size(number_initial_tables);
   crow::SimpleApp app;
-  table_worker tw1("one", 5555);
-  table_connection tc1(5555);
+  int socket_port = initial_table_port;
+  table_worker tw1("one", socket_port);
+  table_connection tc1(tw1.get_port());
   manager.add(&tw1, &tc1);
-  table_worker tw2("two", 5556);
-  table_connection tc2(5556);
+  socket_port = tw1.get_port() + 1;
+  table_worker tw2("two", socket_port);
+  table_connection tc2(socket_port);
   manager.add(&tw2, &tc2);
   declare_routes(app);
-  app.port(8080).multithreaded().run();
+  app.port(port).multithreaded().run();
 }

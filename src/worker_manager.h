@@ -15,10 +15,15 @@ class worker_manager {
 
  public:
   worker_manager() {
-    workers.reserve(10); // Decent initial guess on number of tables
+    workers.reserve(10); 
     conns.reserve(10);
     queries_filed = 0;
   };
+
+  void set_initial_size(int size) {
+    workers.reserve(size);
+    conns.reserve(size);
+  }
 
   uint32_t get_next_query_id() {
     return queries_filed++;
