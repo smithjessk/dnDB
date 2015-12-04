@@ -29,7 +29,7 @@ std::string build_update_string(std::string table_name, std::string col_name,
   std::stringstream ss;
   ss << "\"" << table_name << "\",";
   ss << "\"" << col_name << "\",";
-  ss << "\"" << row_id << "\",";
+  ss << row_id << ",";
   ss << "\"" << value << "\"";
   ss >> ret_value;
   return ret_value;
