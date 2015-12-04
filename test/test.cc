@@ -30,10 +30,11 @@ void update_table(std::string table_name) {
 }
 
 int main() {
-  /*std::thread t1(read_table, "one");
+  std::thread t1(read_table, "one");
   std::thread t2(read_table, "two");
+  std::thread t3(update_table, "one");
   t1.join();
-  t2.join();*/
-  update_table("one");
+  t2.join();
+  t3.join();
   return 0;
 }

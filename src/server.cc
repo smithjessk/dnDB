@@ -5,18 +5,6 @@
 #include "../deps/crow_all.h"
 #include "../deps/zmq.hpp"
 
-/**
- * 1) Extract information from the query
- * 2) Send this information into the appropriate table worker
- * 3) Once the table worker is done (or 15 seconds have passed), reply using 
- * the appropriate query object 
- */
-
-// To properly hang up on results, maintain a map between some sort of query 
-// ID and the query struct. Can't use queue because that would introduce race 
-// conditions. 
-// Remove the element from the map in the HTTP response code.
-
 worker_manager manager;
 
 bool contains_quote(std::string s) {
