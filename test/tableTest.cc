@@ -1,3 +1,27 @@
+#include "table.h"
+
+//prints string vector
+void print(std::vector<std::string> v){
+    for(auto i=0;i<v.size();i++){
+        std::cout<<v[i];
+        if(i<v.size()-1){
+            std::cout<<",";
+        }
+    }
+    std::cout<<std::endl;
+}
+
+//prints int vector
+void print(std::vector<int> v){
+    for(auto i=0;i<v.size();i++){
+        std::cout<<v[i];
+        if(i<v.size()-1){
+            std::cout<<",";
+        }
+    }
+    std::cout<<std::endl;
+}
+
 int main(){
     Table table("table.csv");
     //table.addColumn("\"newColumn\"");
@@ -13,10 +37,11 @@ int main(){
     table.addRow("\"Jack\",\"54\",\"cucumber\",22,\"Smith\",cc");
     table.addRow("\"Chad\",\"69\",\"banana\",22,\"Caesar\",cc");
 
+    table.setElement(4,"Last Name", "Azari");
     //table.addColumn("z");
-    //print(table.getRow(5));
+    print(table.getRow(4));
 
 
-    table.save_table("save.csv");
+    table.saveTable("save.csv");
     return 0;
 }
