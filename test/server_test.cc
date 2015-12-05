@@ -54,6 +54,19 @@ void add_column(std::string table_name) {
   std::printf("\n"); 
 }
 
+void add_row(std::string table_name) {
+  Json::Value to_send;
+  to_send["table_name"] = table_name;
+  to_send["row"] = "\"Ali\",\"1000\",\"orange\"";
+  std::string data = to_send.toStyledString();
+    CURL *curl = curl_easy_init();
+  curl_easy_setopt(curl, CURLOPT_URL, 
+    "http://localhost:8080/table/add_row");
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+  curl_easy_perform(curl);
+  std::printf("\n"); 
+}
+
 void sanity_test() {
   std::thread t1(read_table, "sample.csv");
   t1.join();
@@ -61,10 +74,12 @@ void sanity_test() {
   t2.join();
   std::thread t3(read_table, "sample.csv");
   t3.join();
-  std::thread t4(add_column, "sample.csv");
+  std::thread t4(add_row, "sample.csv");
   t4.join();
-  std::thread t5(read_table, "sample.csv");
+  std::thread t5(add_column, "sample.csv");
   t5.join();
+  std::thread t6(read_table, "sample.csv");
+  t6.join();
 }
 
 int main() {

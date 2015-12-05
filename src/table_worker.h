@@ -95,6 +95,17 @@ class table_worker {
           q.mark_unsuccessful();
         }
       }
+      case ADD_ROW: {
+        try {
+          table.addRow(q.data);
+          q.mark_successful();
+          q.set_data("success");
+        } catch (int n) {
+          std::printf("Got error in ADD ROW: %s: %d", table_name.c_str(), 
+            n);
+          q.mark_unsuccessful();
+        }
+      }
       default: {
         break;
       }

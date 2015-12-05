@@ -34,7 +34,8 @@ enum query_type {
   UPDATE, 
   DELETE, 
   SQL, 
-  ADD_COLUMN
+  ADD_COLUMN,
+  ADD_ROW
 };
 
 struct query {
