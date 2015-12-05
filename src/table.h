@@ -12,48 +12,64 @@
 #include <cmath>
 
 class Table {
-private:
-    std::string tableName = "";
-    int maxID=0;
-    std::unordered_map<std::string, std::unordered_map<int, std::string> > masterTable; //data structure for table
-    std::vector<int> idValues;
-    std::vector<std::string> colValues;
-public:
-    Table(std::string filepath);
-    void addRowGivenID(int, std::string);
-    void addRow(std::string);
-    void addColumn(std::string);
-    void removeRow(int);
-    void removeColumn(std::string);
-    void setElement(int, std::string, std::string);
-    int getNumRows();
-    int getNumCols();
-    std::string getTableName();
-    std::vector<std::string> getColNames();
-    std::vector<std::string> getRow(int);
-    void save_table(std::string fileName);
+    private:
+        std::string tableName = "";
+        int maxID=0;
+        std::unordered_map<std::string, std::unordered_map<int, std::string> > masterTable; //data structure for table
+        std::vector<int> idValues;
+        std::vector<std::string> colValues;
+    public:
+        Table(std::string filepath);
+        void addRowGivenID(int, std::string);
+        void addRow(std::string);
+        void addColumn(std::string);
+        void removeRow(int);
+        void removeColumn(std::string);
+        void setElement(int, std::string, std::string);
+        int getNumRows();
+        int getNumCols();
+        std::string getTableName();
+        std::vector<std::string> getColNames();
+        std::vector<std::string> getRow(int);
+        void saveTable(std::string fileName);
+        std::string getSerializedTable();
 };
 
-//prints string vector
-void print(std::vector<std::string> v){
-    for(auto i=0;i<v.size();i++){
-        std::cout<<v[i];
-        if(i<v.size()-1){
-            std::cout<<",";
+std::string Table::getSerializedTable() {
+    std::string table = "";
+    
+    //add column row
+    for (auto i = 0; i < colValues.size(); i++) {
+        table += colValues[i];
+        //if not the last column name, add a comma
+        if (i < colValues.size() - 1) {
+            table += ",";
         }
     }
-    std::cout<<std::endl;
-}
-
-//prints int vector
-void print(std::vector<int> v){
-    for(auto i=0;i<v.size();i++){
-        std::cout<<v[i];
-        if(i<v.size()-1){
-            std::cout<<",";
+    
+    //new line character for next row
+    table += "\n";
+    
+    //add rows
+    //for each row
+    for (int i : idValues) {
+        std::string row = "";
+        
+        //for each element in row
+        for (int j = 0; j < getRow(i).size(); j++) {
+            row += getRow(i)[j];
+            
+            //if not the last element, add a comma
+            if (j < getRow(i).size() - 1) {
+                row += ",";
+            }
         }
+        
+        //new line character for next row
+        table = table + row + "\n";
     }
-    std::cout<<std::endl;
+    
+    return table;
 }
 
 //checks if string is an int
@@ -132,6 +148,13 @@ void Table::addColumn(std::string colName){
     if (std::find(colValues.begin(),colValues.end(),colName) == colValues.end()) {
         colValues.push_back(colName);
     }
+    
+    std::unordered_map<int,std::string> temp;
+         for (int i = 0; i < idValues.size(); i++) {
+             temp = {{idValues[i],colName}};
+             masterTable.emplace(colName,temp);
+             masterTable[colName][idValues[i]] = "\"\"";
+         }
 }
 
 void Table::removeRow(int id){
@@ -236,7 +259,7 @@ Table::Table(std::string fileName) {
     }
 }
 
-void Table::save_table(std::string fileName){
+void Table::saveTable(std::string fileName){
     std::ofstream save_file;
     save_file.open(fileName);
     
@@ -268,13 +291,7 @@ void Table::save_table(std::string fileName){
             
             for(int j=0;j<rowVector.size();j++){
                 std::string curr = rowVector[j];
-                if(curr.size()==0){
-                    save_file << "\"\"";
-                    if(j < rowVector.size()-1){
-                        save_file << ",";
-                    }
-                    continue;
-                }
+
                 save_file << curr;
                 //add the comma to separate entries
                 if(j < rowVector.size()-1){
