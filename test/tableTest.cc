@@ -11,15 +11,12 @@ int main(){
     table.addColumn("Last Name");
     table.addColumn("New Column");
     table.addRow("\"Jack\",\"54\",\"cucumber\",22,\"Smith\",cc");
-    table.addRow("\"Chad\",\"69\",\"banana\",22,\"Thundercock\",cc");
+    table.addRow("\"Chad\",\"69\",\"banana\",22,\"Caesar\",cc");
 
-
-    //table.removeColumn("Last Name");
-    //std::cout<<table.masterTable["New Column22"][79];
     //table.addColumn("z");
     //print(table.getRow(5));
 
-    table.setElement(4,"Last Name", "Azari");
+
     table.save_table("save.csv");
     return 0;
 }
