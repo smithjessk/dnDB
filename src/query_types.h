@@ -72,6 +72,10 @@ struct query {
     this->successful = true;
   }
 
+  void mark_unsuccessful() {
+    this->successful = false;
+  }
+
   uint32_t get_total_size() {
     return sizeof(uint32_t) + sizeof(query_type) + sizeof(bool) + sizeof(uint32_t) + data.size() + 1;
   }

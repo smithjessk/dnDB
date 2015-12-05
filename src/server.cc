@@ -24,6 +24,17 @@ std::string build_update_string(std::string table_name, std::string col_name,
   return ret_value;
 }
 
+query *send_and_get_response(table_connection *conn, query *q) {
+  zmq::message_t request = q->generate_message();
+  std::unique_lock<std::mutex> lock(conn->mutex);
+  conn->socket.send(request);
+  delete q;
+  zmq::message_t reply;
+  conn->socket.recv(&reply);
+  lock.unlock();
+  return new query((char *) reply.data());
+}
+
 void declare_routes(crow::SimpleApp &app) {
   CROW_ROUTE(app, "/ping")
   .methods("GET"_method)
@@ -43,7 +54,8 @@ void declare_routes(crow::SimpleApp &app) {
     query *q = new query(id, CREATE);
     q->set_data(table_name);
     // manager.create_table(q);
-    return crow::response{table_name};
+    // create_worker(q);
+    return crow::response(table_name);
   });
 
   CROW_ROUTE(app, "/table/read")
@@ -59,14 +71,10 @@ void declare_routes(crow::SimpleApp &app) {
       uint32_t id = manager.get_next_query_id();
       query *q = new query(id, READ);
       q->set_data(table_name);
-      zmq::message_t request = q->generate_message();
-      std::unique_lock<std::mutex> lock(conn->mutex);
-      conn->socket.send(request);
-      delete q;
-      zmq::message_t reply;
-      conn->socket.recv(&reply);
-      lock.unlock();
-      query *response = new query((char *) reply.data());
+      query *response = send_and_get_response(conn, q);
+      if (!response->successful) {
+        return crow::response(400);
+      }
       std::string data = response->data;
       delete response;
       return crow::response(data);
@@ -96,14 +104,10 @@ void declare_routes(crow::SimpleApp &app) {
       query *q = new query(id, UPDATE);
       q->set_data(build_update_string(table_name, col_name, row_id, 
         value));
-      zmq::message_t request = q->generate_message();
-      std::unique_lock<std::mutex> lock(conn->mutex);
-      conn->socket.send(request);
-      delete q;
-      zmq::message_t reply;
-      conn->socket.recv(&reply);
-      lock.unlock();
-      query *response = new query((char *) reply.data());
+      query *response = send_and_get_response(conn, q);
+      if (!response->successful) {
+        return crow::response(400);
+      }
       std::string data = response->data;
       delete response;
       return crow::response(data);
@@ -125,14 +129,10 @@ void declare_routes(crow::SimpleApp &app) {
       uint32_t id = manager.get_next_query_id();
       query *q = new query(id, DELETE);
       q->set_data(table_name);
-      zmq::message_t request = q->generate_message();
-      std::unique_lock<std::mutex> lock(conn->mutex);
-      conn->socket.send(request);
-      delete q;
-      zmq::message_t reply;
-      conn->socket.recv(&reply);
-      lock.unlock();
-      query *response = new query((char *) reply.data());
+      query *response = send_and_get_response(conn, q);
+      if (!response->successful) {
+        return crow::response(400);
+      }
       std::string data = response->data;
       delete response;
       return crow::response(data);
@@ -155,14 +155,10 @@ void declare_routes(crow::SimpleApp &app) {
       uint32_t id = manager.get_next_query_id();
       query *q = new query(id, DELETE);
       q->set_data(table_name);
-      zmq::message_t request = q->generate_message();
-      std::unique_lock<std::mutex> lock(conn->mutex);
-      conn->socket.send(request);
-      delete q;
-      zmq::message_t reply;
-      conn->socket.recv(&reply);
-      lock.unlock();
-      query *response = new query((char *) reply.data());
+      query *response = send_and_get_response(conn, q);
+      if (!response->successful) {
+        return crow::response(400);
+      }
       std::string data = response->data;
       delete response;*/
       return crow::response(statement);
