@@ -51,6 +51,7 @@ class table_worker {
           int row_id = stoi(parts.at(1));
           std::string value = parts.at(2);
           table.setElement(row_id, col_name, value);
+          q.set_data("success");
           q.mark_successful();
         } catch (int n) {
           std::printf("Got error in UPDATE %s: %d", table_name.c_str(), n);
