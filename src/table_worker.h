@@ -11,10 +11,11 @@
 
 #include "../deps/zmq.hpp"
 #include "query_types.h"
-// #include "table.h"
+#include "table.h"
 
 class table_worker {
  private:
+  std::string file_path;
   std::string table_name;
   bool done;
   bool processing_request;
@@ -24,7 +25,7 @@ class table_worker {
   std::string protocol;
   int port;
   bool connected;
-  // table t;
+  Table table;
 
   /**
    * Processes a given query, saving the table as necessary. If an error is 
@@ -35,10 +36,7 @@ class table_worker {
     switch (q.type) {
       case READ: {
         try {
-          /*
-            
-           */
-          q.set_data("READ TABLE " + q.data);
+          // q.set_data(table.getSerializedTable());
           q.mark_successful();
         } catch (int n) {
           std::printf("Got error in READ %s: %d", table_name.c_str(), n);
@@ -48,7 +46,11 @@ class table_worker {
       }
       case UPDATE: {
         try {
-          q.set_data("UPDATE TABLE " + q.data);
+          std::vector<std::string> parts = split(q.data);
+          std::string col_name = parts.at(0);
+          int row_id = stoi(parts.at(1));
+          std::string value = parts.at(2);
+          table.setElement(row_id, col_name, value);
           q.mark_successful();
         } catch (int n) {
           std::printf("Got error in UPDATE %s: %d", table_name.c_str(), n);
@@ -58,8 +60,13 @@ class table_worker {
       }
       case DELETE: {
         try {
-          q.set_data("DELETE TABLE " + q.data);
-          q.mark_successful();
+          if (remove(file_path.c_str()) != 0) {
+            std::printf("Got error in DELETE %s: Could not remove file", 
+              table_name.c_str());
+            q.mark_unsuccessful();
+          } else {
+            q.mark_successful();  
+          }
         } catch (int n) {
           std::printf("Got error in DELETE %s: %d", table_name.c_str(), n);
           q.mark_unsuccessful();
@@ -95,51 +102,57 @@ class table_worker {
     }
   };
 
-  /**
-   * Associated with the atexit() of this main thread. Marks that no more
-   * requests should be processed and then, once the final request is done,
-   * dies with grace. 
-   */
-  void exit_gracefully() {
-    done = true;
-    while(processing_request) {} 
-    // save_table(); 
-  }
-
  public:
   /**
    * Constructs this table_worker using the given information. Communicates 
    * using the TCP protocol. Once this worker has connected to the given port,
    * spawns the worker thread to start processing messages.
-   * @param name The name of the table
+   * @param file_path The path of the file that drives this table.
    * @param port The port to first try to bind on. If this port cannot be 
    * connected to, then increment it and try again.
    */
-  // table_worker(std::string file_name, int port) {
-  table_worker(std::string name, int port)
-    : table_name(name),
-    port(port),
-    protocol("tcp"),
-    connected(false),
+  table_worker(std::string file_path, int port)
+    : file_path(file_path),
     done(false),
     processing_request(false),
     context(1),
-    // table(file_name)
-    input_socket(context, ZMQ_REP) {
+    input_socket(context, ZMQ_REP),
+    protocol("tcp"),
+    port(port),
+    connected(false),
+    table(file_path) {
+      table_name = table.getTableName();
       while (!connected) {
         try {
+          std::printf("Trying to bind...\n");
+          input_socket = zmq::socket_t(context, ZMQ_REP);
           input_socket.bind(get_bound_address());
           connected = true;
         } catch (int n) {
+          std::printf("Got error %d\n", n);
+          port++;
+        } catch (zmq::error_t error) {
           std::printf("%s in use. Trying next port...\n", 
             get_bound_address().c_str());
           port++;
+          std::printf("next port is %d\n", port);
+          std::printf("%s\n", get_bound_address().c_str());
         }
       }
       std::printf("Successfully bound to address %s\n", 
         get_bound_address().c_str());
       t = std::thread([this] { process_messages(); });
-      // atexit(exit_gracefully);
+  }
+
+  /**
+   * Associated with the atexit() of this main thread. Marks that no more
+   * requests should be processed and then, once the final request is done,
+   * dies with grace. 
+   */
+  ~table_worker() {
+    done = true;
+    while(processing_request) {} 
+    table.save_table(file_path); 
   }
 
   /**
@@ -181,6 +194,7 @@ class table_worker {
     ss << "://*:";
     ss << port;
     ss >> address;
+    ss.clear();
     return address;
   }
 };

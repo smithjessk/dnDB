@@ -12,11 +12,18 @@ bool contains_quote(std::string s) {
   return s.find('"') != std::string::npos;
 }
 
-std::string build_update_string(std::string table_name, std::string col_name, 
-  int row_id, std::string value) {
+/**
+ * Return a string that is used in table_worker.h to update a value in the 
+ * table
+ * @param  col_name   Column name to update
+ * @param  row_id     Row ID to update
+ * @param  value      Value to update to
+ * @return            E.g. "my_col",1,"new_val"
+ */
+std::string build_update_string(std::string col_name, int row_id,
+  std::string value) {
   std::string ret_value;
   std::stringstream ss;
-  ss << "\"" << table_name << "\",";
   ss << "\"" << col_name << "\",";
   ss << row_id << ",";
   ss << "\"" << value << "\"";
@@ -96,14 +103,13 @@ void declare_routes(crow::SimpleApp &app) {
       int row_id = body["row_id"].i();
       std::string value = body["value"].s();
       if (contains_quote(table_name) || contains_quote(col_name) || 
-        contains_quote(value)) { // Test this!
+        contains_quote(value)) {
         return crow::response(400);
       }
       table_connection *conn = manager.get_conn(table_name);
       uint32_t id = manager.get_next_query_id();
       query *q = new query(id, UPDATE);
-      q->set_data(build_update_string(table_name, col_name, row_id, 
-        value));
+      q->set_data(build_update_string(col_name, row_id, value));
       query *response = send_and_get_response(conn, q);
       if (!response->successful) {
         return crow::response(400);
@@ -184,13 +190,9 @@ int main(int argc, char** argv) {
   manager.set_initial_size(number_initial_tables);
   crow::SimpleApp app;
   int socket_port = initial_table_port;
-  table_worker tw1("one", socket_port);
+  table_worker tw1("./data/sample.csv", socket_port);
   table_connection tc1(tw1.get_port());
   manager.add(&tw1, &tc1);
-  socket_port = tw1.get_port() + 1;
-  table_worker tw2("two", socket_port);
-  table_connection tc2(socket_port);
-  manager.add(&tw2, &tc2);
   declare_routes(app);
   app.port(port).multithreaded().run();
 }
