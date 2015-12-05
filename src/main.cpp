@@ -11,7 +11,7 @@ int main(){
     table.addColumn("Last Name");
     table.addColumn("New Column");
     table.addRow("\"Jack\",\"54\",\"cucumber\",22,\"Smith\",cc");
-    table.addRow("\"Chad\",\"69\",\"banana\",22,\"Thundercock\",cc");
+    table.addRow("\"Chad\",\"69\",\"banana\",22,\"Caesar\",cc");
 
     //table.addColumn("z");
     //print(table.getRow(5));
