@@ -43,35 +43,8 @@ void delete_table(std::string table_name) {
 
 int main() {
   int num_threads = 6;
-  std::vector<std::string> table_names = {"one", "two"};
-  std::vector<std::thread> threads;
-  for (size_t i = 0; i < num_threads; i++) {
-    size_t table_name_index = i % table_names.size();
-    size_t quotient = i / 2;
-    switch (quotient) {
-      case 0: {
-        threads.push_back(std::thread(read_table, 
-          table_names.at(table_name_index)));  
-        break;
-      }
-      case 1: {
-        threads.push_back(std::thread(update_table,
-          table_names.at(table_name_index)));
-        break;
-      }
-      case 2: {
-        threads.push_back(std::thread(delete_table,
-          table_names.at(table_name_index)));
-        break; 
-      }
-      default: {
-        std::printf("Got unexpected quotient %zu\n", table_name_index);
-        break;
-      }
-    }
-  }
-  for (size_t i = 0; i < threads.size(); i++) {
-    threads.at(i).join();
-  }
+  std::vector<std::string> table_names = {"sample"};
+  std::thread t1(read_table, "./data/sample");
+  t1.join();
   return 0;
 }

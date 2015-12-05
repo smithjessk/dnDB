@@ -36,7 +36,7 @@ class table_worker {
     switch (q.type) {
       case READ: {
         try {
-          // q.set_data(table.getSerializedTable());
+          q.set_data(table.getSerializedTable());
           q.mark_successful();
         } catch (int n) {
           std::printf("Got error in READ %s: %d", table_name.c_str(), n);
@@ -122,6 +122,7 @@ class table_worker {
     connected(false),
     table(file_path) {
       table_name = table.getTableName();
+      std::printf("table_name = %s\n", table_name.c_str());
       while (!connected) {
         try {
           std::printf("Trying to bind...\n");
@@ -152,7 +153,7 @@ class table_worker {
   ~table_worker() {
     done = true;
     while(processing_request) {} 
-    table.save_table(file_path); 
+    table.saveTable(file_path); 
   }
 
   /**

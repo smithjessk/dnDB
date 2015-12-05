@@ -31,29 +31,45 @@ class Table {
         std::string getTableName();
         std::vector<std::string> getColNames();
         std::vector<std::string> getRow(int);
-        void save_table(std::string fileName);
+        void saveTable(std::string fileName);
+        std::string getSerializedTable();
 };
 
-//prints string vector
-void print(std::vector<std::string> v){
-    for(auto i=0;i<v.size();i++){
-        std::cout<<v[i];
-        if(i<v.size()-1){
-            std::cout<<",";
-        }
-    }
-    std::cout<<std::endl;
-}
+std::string Table::getSerializedTable() {
+    std::string table = "";
 
-//prints int vector
-void print(std::vector<int> v){
-    for(auto i=0;i<v.size();i++){
-        std::cout<<v[i];
-        if(i<v.size()-1){
-            std::cout<<",";
+    //add column row
+    for (auto i = 0; i < colValues.size(); i++) {
+        table += colValues[i];
+        //if not the last column name, add a comma
+        if (i < colValues.size() - 1) {
+            table += ",";
         }
     }
-    std::cout<<std::endl;
+
+    //new line character for next row
+    table += "\n";
+
+    //add rows
+    //for each row
+    for (int i : idValues) {
+        std::string row = "";
+
+        //for each element in row
+        for (int j = 0; j < getRow(i).size(); j++) {
+            row += getRow(i)[j];
+
+            //if not the last element, add a comma
+            if (j < getRow(i).size() - 1) {
+                row += ",";
+            }
+        }
+
+        //new line character for next row
+        table = table + row + "\n";
+    }
+
+    return table;
 }
 
 //checks if string is an int
@@ -132,6 +148,13 @@ void Table::addColumn(std::string colName){
     if (std::find(colValues.begin(),colValues.end(),colName) == colValues.end()) {
         colValues.push_back(colName);
     }
+
+    std::unordered_map<int,std::string> temp;
+         for (int i = 0; i < idValues.size(); i++) {
+             temp = {{idValues[i],colName}};
+             masterTable.emplace(colName,temp);
+             masterTable[colName][idValues[i]] = "\"\"";
+         }
 }
 
 void Table::removeRow(int id){
@@ -236,61 +259,14 @@ Table::Table(std::string fileName) {
     }
 }
 
-void Table::save_table(std::string fileName){
+void Table::saveTable(std::string fileName){
     std::ofstream save_file;
     save_file.open(fileName);
 
     if (!save_file.is_open()) {
         throw "File did not open correctly.";
     }
-
-    int counter = 0;
-    std::vector<int> keyValue;
-
-    for(auto colIt = colValues.begin(); colIt != colValues.end(); ++colIt){
-        save_file << *colIt;
-        counter++;
-        if(counter < masterTable.size()){
-            save_file << ",";
-        }else{
-            save_file << std::endl;
-        }
-    }
-
-    //save the values of each row
-    counter = 0;
-    int indexCounter = 0;
-    int matchCounter = 0;
-    while(counter < idValues.size()){
-        std::vector<std::string> rowVector;
-        for(auto k=idValues.begin();k!=idValues.end();++k){
-            rowVector=getRow(*k);
-
-            for(int j=0;j<rowVector.size();j++){
-                std::string curr = rowVector[j];
-                if(curr.size()==0){
-                    save_file << "\"\"";
-                    if(j < rowVector.size()-1){
-                        save_file << ",";
-                    }
-                    continue;
-                }
-                save_file << curr;
-                //add the comma to separate entries
-                if(j < rowVector.size()-1){
-                    save_file << ",";
-                }
-                matchCounter = 0;
-            }
-
-            //new line for new id
-            save_file << std::endl;
-            indexCounter++;
-            counter++;
-
-
-        }
-    }
+    save_file << getSerializedTable();
 
     save_file.close();
 }
