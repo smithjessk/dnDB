@@ -30,17 +30,18 @@ int main(){
     table.addRow("77,\"James\",\"16\",\"none\"");
     table.addRow("\"Kevin\",\"44\",\"fries\"");
     //table.addColumn("New Column22");
-    table.addColumn("New Column22");
+    table.addColumn("\"New Column22\"");
     //table.addColumn("c1");
-    table.addColumn("Last Name");
-    table.addColumn("New Column");
-    table.addRow("\"Jack\",\"54\",\"cucumber\",22,\"Smith\",cc");
-    table.addRow("\"Chad\",\"69\",\"banana\",22,\"Caesar\",cc");
+    table.addColumn("\"Last Name\"");
+    table.addColumn("\"New Column\"");
+    table.addRow("\"Jack\",\"54\",\"cucumber\",\"22\",\"Smith\",\"cc\"");
+    table.addRow("\"Chad\",\"69\",\"banana\",\"22\",\"Caesar\",\"cc\"");
 
-    table.setElement(4,"Last Name", "Azari");
+    table.setElement(4,"\"Last Name\"", "\"Azari\"");
     //table.addColumn("z");
     print(table.getRow(4));
 
+    std::cout<<table.getSerializedTable()<<std::endl;
 
     table.saveTable("save.csv");
     return 0;
