@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
@@ -9,10 +10,10 @@
 
 class Table {
     public:
-        int numRows=0, numCols=0, maxID=0;
+        int numRows=0, numCols=0, maxID=0;      //numRows does NOT account for header row.
         std::unordered_map<std::string, std::unordered_map<int, std::string> > masterTable;
+        std::vector<int> idValues;
         Table(std::string filepath);
-        //void addRow(std::string); do we need?
         void addRowGivenID(int, std::string);
         void addRow(std::string);
         void addColumn(std::string);
@@ -25,7 +26,19 @@ class Table {
         void save_table(std::string fileName);
 };
 
+//prints string vector
 void print(std::vector<std::string> v){
+    for(auto i=0;i<v.size();i++){
+        std::cout<<v[i];
+        if(i<v.size()-1){
+            std::cout<<",";
+        }
+    }
+    std::cout<<std::endl;
+}
+
+//prints int vector
+void print(std::vector<int> v){
     for(auto i=0;i<v.size();i++){
         std::cout<<v[i];
         if(i<v.size()-1){
@@ -65,8 +78,8 @@ void Table::addRowGivenID(int id, std::string CSV){
         std::cout<< "Row/column size mismatch"<<std::endl;
         return;
     }
-
-    std::reverse(cols.begin(),cols.end());
+    idValues.push_back(id);
+    //std::reverse(cols.begin(),cols.end());
 
     int cnt=0;
     for(auto k:cols){
@@ -107,11 +120,14 @@ void Table::addRow(std::string CSV){
 
 
 void Table::addColumn(std::string colName){
-    //std::vector<std::string> cols = getColNames();
-    //std::unordered_map<int,std::string> empt = {{0,""}};
+
     masterTable[colName];
-    /*for(auto k:cols){
-        masterTable[k];
+
+    /*std::unordered_map<int,std::string> temp;
+    for(int i=0;i<idValues.size();i++){             //LOOK
+        temp={{idValues[i],colName}};               //HERE
+        //masterTable.emplace(colName,temp);        //!!!!!!!!
+        masterTable[colName][idValues[i]]=colName;  //CHANGE THIS TO SAY MAYBE "EMPTY" OR "NOT SPECIFIED" OR SOME SHIT IF NEEDED
     }
     */
 }
@@ -121,6 +137,8 @@ void Table::removeRow(int id){
     for(auto k:cols){
         masterTable[k].erase(id);
     }
+    int pos = std::find(idValues.begin(),idValues.end(),id)-idValues.begin();
+    idValues.erase(idValues.begin()+pos);
     numRows--;
 }
 
@@ -212,7 +230,6 @@ Table::Table(std::string fileName) {
                 std::string error = "ERROR: id " + id + " not an int";
                 throw error;
             }
-
             int value;
             std::stringstream ss;
             ss<<id;
@@ -238,29 +255,22 @@ void Table::save_table(std::string fileName){
     int counter = 0;
     std::vector<int> keyValue;
     //added this so i can read to it from the mastertable, so that saving header line to file is in right order.
-    std::vector<std::string> colValues;
+    std::vector<std::string> colValues = getColNames();
 
     //save the names of the columns
     //save_file << "_id,";
+    /*
     for(auto colIt = masterTable.begin(); colIt != masterTable.end(); ++colIt){
         colValues.push_back(colIt->first);
-        /*save_file << colIt->first;
-        counter++;
-        if(counter < masterTable.size()){
-            save_file << ",";
-        }else{
-            save_file << std::endl;
-        }
-        */
 
         //compile list of all the ids possible in the map
-        std::unordered_map<int, std::string> tempMap = colIt->second;
-        for(auto rowIt = tempMap.begin(); rowIt != tempMap.end(); ++rowIt){
+        //std::unordered_map<int, std::string> tempMap = colIt->second;
+        /*for(auto rowIt = tempMap.begin(); rowIt != tempMap.end(); ++rowIt){
             keyValue.push_back(rowIt->first);
         }
     }
-    reverse(colValues.begin(),colValues.end());
-    //including or excluding the above line does not change the output
+    */
+
 
     for(auto colIt = colValues.begin(); colIt != colValues.end(); ++colIt){
         save_file << *colIt;
@@ -272,60 +282,56 @@ void Table::save_table(std::string fileName){
         }
     }
     //make the values unique
-    sort(keyValue.begin(), keyValue.end());
-    keyValue.erase(unique(keyValue.begin(), keyValue.end() ), keyValue.end());
+    //sort(idValues.begin(), idValues.end());
+    //idValues.erase(unique(idValues.begin(), idValues.end() ), idValues.end());
 
-    //std::reverse(keyValue.begin(),keyValue.end());
+    std::reverse(colValues.begin(),colValues.end());
+    //std::reverse(idValues.begin(),idValues.end());
     //remove cuz using this would reverse the row order.
 
     //save the values of each row
     counter = 0;
     int indexCounter = 0;
     int matchCounter = 0;
-    while(counter < keyValue.size()){
-        for(auto colIt = masterTable.begin(); colIt != masterTable.end(); ++colIt){
-            std::unordered_map<int, std::string> row = colIt->second;
-            for(auto rowIt = row.begin(); rowIt != row.end(); ++rowIt){
-                if(rowIt->first == keyValue[indexCounter]){
-                    save_file << rowIt->second;
-                    matchCounter++;
+    while(counter < idValues.size()){
+        std::vector<std::string> rowVector;
+        for(auto k=idValues.begin();k!=idValues.end();++k){
+            rowVector=getRow(*k);
+            //std::reverse(rowVector.begin(),rowVector.end());
+
+            for(int j=0;j<rowVector.size();j++){
+                std::string curr = rowVector[j];
+                if(curr.size()==0){
+                    save_file << "\"\"";             //!!!!!!!!!!!!! HERE !!!!!!!!!!! change the string to whatever else as desired.
+                    if(j < rowVector.size()-1){
+                    save_file << ",";
+                    }
+                    continue;
                 }
-
+                save_file << curr;
+                //add the comma to separate entries
+                if(j < rowVector.size()-1){
+                    save_file << ",";
+                }
+                matchCounter = 0;
             }
-            //adds a space for empty values
-            if(matchCounter == 0){
-                save_file << "\"\"";
-            }
 
-            auto temp = colIt;
-            temp++;
+            //new line for new id
+            save_file << std::endl;
+            indexCounter++;
+            counter++;
 
-            //add the comma to separate entries
-            if(temp != masterTable.end()){
-                save_file << ",";
-            }
-            matchCounter = 0;
+
         }
-        //new line for new id
-        save_file << std::endl;
-        indexCounter++;
-        counter++;
+        /*for(auto rowIt = row.begin(); rowIt != row.end(); ++rowIt){
+            if(rowIt->first == idValues[indexCounter]){
+                save_file << rowIt->second;
+                matchCounter++;
+            }
+
+        }*/
+        //adds a space for empty values
+
     }
     save_file.close();
-}
-
-
-int main(){
-    Table table("table.csv");
-    //table.addColumn("\"newColumn\"");
-    //table.addRow(5,"5,\"James\",\"16\",y");
-    //table.addColumn("\"name\"");
-    table.addRow("77,\"James\",\"16\",\"none\"");
-    table.addRow("\"Kevin\",\"44\",\"fries\"");
-    table.addColumn("newColumn");
-    //table.addColumn("z");
-    //print(table.getRow(5));
-
-
-    table.save_table("save.csv");
 }
