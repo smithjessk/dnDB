@@ -1,7 +1,11 @@
+#ifndef CONFIG_READER_H
+#define CONFIG_READER_H
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <unordered_map>
+
 using namespace std;
 
 /*
@@ -96,3 +100,5 @@ string remove_beginning_space(string s){
 	}
 	return s;
 }
+
+#endif // CONFIG_READER_H
