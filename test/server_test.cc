@@ -55,15 +55,15 @@ void add_column(std::string table_name) {
 }
 
 void sanity_test() {
-  std::thread t1(read_table, "./data/sample");
+  std::thread t1(read_table, "sample.csv");
   t1.join();
-  std::thread t2(update_table, "./data/sample");
+  std::thread t2(update_table, "sample.csv");
   t2.join();
-  std::thread t3(read_table, "./data/sample");
+  std::thread t3(read_table, "sample.csv");
   t3.join();
-  std::thread t4(add_column, "./data/sample");
+  std::thread t4(add_column, "sample.csv");
   t4.join();
-  std::thread t5(read_table, "./data/sample");
+  std::thread t5(read_table, "sample.csv");
   t5.join();
 }
 
