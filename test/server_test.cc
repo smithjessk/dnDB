@@ -41,6 +41,19 @@ void delete_table(std::string table_name) {
   std::printf("\n"); 
 }
 
+void add_column(std::string table_name) {
+  Json::Value to_send;
+  to_send["table_name"] = table_name;
+  to_send["col_name"] = "occupation";
+  std::string data = to_send.toStyledString();
+    CURL *curl = curl_easy_init();
+  curl_easy_setopt(curl, CURLOPT_URL, 
+    "http://localhost:8080/table/add_column");
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+  curl_easy_perform(curl);
+  std::printf("\n"); 
+}
+
 void sanity_test() {
   std::thread t1(read_table, "./data/sample");
   t1.join();
@@ -48,6 +61,10 @@ void sanity_test() {
   t2.join();
   std::thread t3(read_table, "./data/sample");
   t3.join();
+  std::thread t4(add_column, "./data/sample");
+  t4.join();
+  std::thread t5(read_table, "./data/sample");
+  t5.join();
 }
 
 int main() {

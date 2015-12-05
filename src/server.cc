@@ -172,6 +172,32 @@ void declare_routes(crow::SimpleApp &app) {
       return crow::response(400);
     }
   });
+
+  CROW_ROUTE(app, "/table/add_column")
+  .methods("POST"_method)
+  ([](const crow::request &req) {
+    auto body = crow::json::load(req.body);
+    if (!body){
+      return crow::response(400);
+    }
+    try {
+      std::string table_name = body["table_name"].s();
+      std::string col_name = body["col_name"].s();
+      uint32_t id = manager.get_next_query_id();
+      table_connection *conn = manager.get_conn(table_name);
+      query *q = new query(id, ADD_COLUMN);
+      q->set_data(col_name);
+      query *response = send_and_get_response(conn, q);
+      if (!response->successful) {
+        return crow::response(400);
+      }
+      std::string data = response->data;
+      delete response;
+      return crow::response(data);
+    } catch (int n) {
+      return crow::response(400);
+    }
+  });
 }
 
 int main(int argc, char** argv) {

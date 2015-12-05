@@ -84,6 +84,17 @@ class table_worker {
         }
         break;
       }
+      case ADD_COLUMN: {
+        try {
+          table.addColumn("\"" + q.data + "\"");
+          q.mark_successful();
+          q.set_data("success");
+        } catch (int n) {
+          std::printf("Got error in ADD COLUMN: %s: %d", table_name.c_str(), 
+            n);
+          q.mark_unsuccessful();
+        }
+      }
       default: {
         break;
       }

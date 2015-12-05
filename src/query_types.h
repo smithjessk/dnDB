@@ -28,7 +28,14 @@ struct table_connection {
   }
 };
 
-enum query_type {CREATE, READ, UPDATE, DELETE, SQL};
+enum query_type {
+  CREATE, 
+  READ, 
+  UPDATE, 
+  DELETE, 
+  SQL, 
+  ADD_COLUMN
+};
 
 struct query {
   uint32_t id;
