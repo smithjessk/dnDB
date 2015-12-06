@@ -55,7 +55,7 @@ std::unordered_map<std::string, std::string> read(std::string file_name){
 			
 			//checks to make sure there was an equals sign
 			if(loc == 0){
-				cout << "Line " << line_number << " of the file did not contain an equals sign." << endl;
+				std::cout << "Line " << line_number << " of the file did not contain an equals sign." << std::endl;
 				line_number += 1;
 				continue;
 			}
@@ -69,8 +69,8 @@ std::unordered_map<std::string, std::string> read(std::string file_name){
 			part2 = remove_beginning_space(part2);
 			
 			//the next two lines can be used for testing
-			//cout << "part1 = " << part1 << endl;
-			//cout << "part2 = " << part2 << endl;
+			//std::cout << "part1 = " << part1 << std::endl;
+			//std::cout << "part2 = " << part2 << std::endl;
 			
 			//add an entry to the unordered map
 			map[part1] = part2;
@@ -81,7 +81,7 @@ std::unordered_map<std::string, std::string> read(std::string file_name){
 		myfile.close();
 	}
 	//warns if the file was unable to be opened
-	else cout << "Unable to find " << file_name << endl;
+	else std::cout << "Unable to find " << file_name << std::endl;
 	
 	//returns the map
 	return map;

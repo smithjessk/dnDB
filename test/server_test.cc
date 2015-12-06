@@ -107,8 +107,8 @@ void invalid_server_name_test(std::string table_name) {
 }
 
 int main() {
-  // sanity_test();
+  sanity_test();
   // quote_test("sample");
-  invalid_server_name_test("sample");
+  // invalid_server_name_test("sample");
   return 0;
 }

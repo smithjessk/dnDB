@@ -274,7 +274,7 @@ int main(int argc, char** argv) {
       number_initial_tables = 10;
       initial_table_port = 5555;
     }
-  } catch (exception e) {
+  } catch (std::exception e) {
     std::cout << "Could not read config file. Using defaults" << std::endl;
     port = 8080;
     number_initial_tables = 10;
