@@ -14,13 +14,12 @@
 
 class Table {
 private:
-    std::string tableName;
-    int maxID;
+    std::string tableName = "";
+    int maxID=0;
     std::unordered_map<std::string, std::unordered_map<int, std::string> > masterTable; //data structure for table
     std::vector<int> idValues;
     std::vector<std::string> colValues;
 public:
-    Table();
     Table(std::string filepath);
     void addRowGivenID(int, std::string);
     void addRow(std::string);
@@ -35,6 +34,7 @@ public:
     std::vector<std::string> getColNames();
     std::vector<std::string> getRow(int);
     std::vector<std::string> getColumn(std::string);
+    void setTableName(std::string);
     void saveTable(std::string fileName);
     std::string getSerializedTable();
 };
@@ -43,7 +43,7 @@ public:
 //post: returns the table as a string
 std::string Table::getSerializedTable() {
     std::string table = "";
-    
+
     //add column row
     for (auto i = 0; i < colValues.size(); i++) {
         table += colValues[i];
@@ -52,28 +52,28 @@ std::string Table::getSerializedTable() {
             table += ",";
         }
     }
-    
+
     //new line character for next row
     table += "\n";
-    
+
     //for each row
     for (int i : idValues) {
         std::string row = "";
-        
+
         //for each element in row
         for (int j = 0; j < getRow(i).size(); j++) {
             row += getRow(i)[j];
-            
+
             //if not the last element, add a comma
             if (j < getRow(i).size() - 1) {
                 row += ",";
             }
         }
-        
+
         //add row and new line character for next row
         table += row + "\n";
     }
-    
+
     return table;
 }
 
@@ -101,20 +101,23 @@ std::vector<std::string> split(std::string s){
 void Table::addRowGivenID(int id, std::string CSV){
     std::vector<std::string> rows;
     std::vector<std::string> cols = getColNames();
-    
+
+    if(std::find(idValues.begin(),idValues.end(),id) != idValues.end()){
+        throw TableException("ID "+id+" already in use");
+    }
     rows=split(CSV);
-    
+
     if (rows.size() != cols.size()) {
         throw TableException("Row/column size mismatch");
     }
     idValues.push_back(id);
-    
+
     int cnt=0;
     for(auto k:cols){
         masterTable[k][id]=rows[cnt];
         cnt++;
     }
-    
+
     maxID = std::max(id,maxID);
     maxID++;
 }
@@ -122,20 +125,20 @@ void Table::addRowGivenID(int id, std::string CSV){
 //the method thats always called first for adding a row. From CSV, figure out ID to use,
 //      and call addRowGivenID
 //pre: CSV properly formatted. order specified matches column order.
-//post: if no ID specified in CSV, calls addRowGivenID with maxID, otherwise exctracts
+//post: if no ID specified in CSV, calls addRowGivenID with maxID, otherwise extracts
 //      ID and calls same with found ID
 void Table::addRow(std::string CSV) {
     std::vector<std::string> row = split(CSV);
     if (row.size() == 0) {
         throw TableException("Empty row");
     }
-    
+
     for (int i = 0; i < row.size(); i++) {
         if (row[i].size() == 0) {
             throw TableException("Not a valid element");
         }
     }
-    
+
     if (row[0].substr(0,1) == "\"") {
         std::stringstream ss;
         ss << maxID;
@@ -160,17 +163,17 @@ void Table::addRow(std::string CSV) {
 //post: if colName not already in use, adds to
 void Table::addColumn(std::string colName){
     masterTable[colName];
-    
+
     //if column name is unique
     //add it to colValues
     //else just do nothing. SHOULD PROBABLY CHANGE THIS TO SHOW AN ERROR/WARNING TOO!~~!~!~!~~!~!~!~
     if (std::find(colValues.begin(),colValues.end(),colName) == colValues.end()) {
         colValues.push_back(colName);
     }
-    else {
-        return;
+    else{
+        throw TableException("Name "+colName+" already in use");
     }
-    
+
     std::unordered_map<int,std::string> temp;
     for (int i = 0; i < idValues.size(); i++) {
         temp = {{idValues[i],colName}};
@@ -182,16 +185,14 @@ void Table::addColumn(std::string colName){
 //iteralte through columns and erase all instances linked to given ID
 //pre: id is valid int. CURRENTLY NO IMPLEMENTATION FOR IF ID IS NOT IN ID LIST~~~~~!!!!!!!~~~~
 //post: removes given row. removes row ID from ID list.
-void Table::removeRow(int id) {
+void Table::removeRow(int id){
     std::vector<std::string> cols = getColNames();
-    
-    for (auto k:cols) {
+    for(auto k:cols){
         masterTable[k].erase(id);
     }
-    
-    int pos = std::find(idValues.begin(), idValues.end(), id) - idValues.begin();
-    idValues.erase(idValues.begin() + pos);
-    
+    int pos = std::find(idValues.begin(),idValues.end(),id)-idValues.begin();
+    idValues.erase(idValues.begin()+pos);
+
 }
 
 //sets element at given row and column to specified value
@@ -206,8 +207,8 @@ void Table::setElement(int rowID, std::string colID, std::string newValue){
 //post: remove instances of colName from both table and colValues.
 void Table::removeColumn(std::string colName){
     masterTable.erase(colName);
-    int pos = std::find(colValues.begin(), colValues.end(), colName) - colValues.begin();
-    colValues.erase(colValues.begin() + pos);
+    int pos = std::find(colValues.begin(),colValues.end(),colName)-colValues.begin();
+    colValues.erase(colValues.begin()+pos);
 }
 
 //returns number of rows in current table
@@ -257,32 +258,23 @@ std::vector<std::string> Table::getColumn(std::string colName){
     return col;
 }
 
-//default constructor for Table class
-//pre: none
-//post: Table object constructed with empty name, maxID = 0, and one column for IDs.
-Table::Table() {
-    tableName = "";
-    maxID = 0;
-    addColumn("_id");
-}
 
 //fucking constructor duh
 //pre: fileName is valid path. Can be either path, or filename in same directory.
 //viktor would know the pre's of this better
 
 //post: table fill out based on file, and named to the same as file name.
-//if it was a blank file, add column ID column.
 Table::Table(std::string fileName) {
     std::ifstream myFile;
-    
+
     myFile.open(fileName);
-    
+
     if (!myFile) {
         throw TableException("No such file in directory");
     }
-    
+
     int slashIndexLast = (int)fileName.find_last_of("/");
-    
+
     //if there is a slash, exclude directory
     if (slashIndexLast != -1) {
         tableName = fileName.substr(slashIndexLast + 1, fileName.find(".csv") - (slashIndexLast + 1));
@@ -290,36 +282,29 @@ Table::Table(std::string fileName) {
     else {
         tableName = fileName.substr(0, fileName.find(".csv"));
     }
-    
-    maxID = 0;
-    
+
     std::string line;
     int lineCount = 0;
     std::string header;
-    
-    //if empty file
-    if (myFile.peek() == std::ifstream::traits_type::eof()) {
-        addColumn("_id");
-    }
-    
+
     while (getline(myFile, line)) {
-        
+
         //find first comma
         int comma = (int)line.find(",");
-        
+
         //if header line
         if (lineCount == 0) {
             //get header string
             header = line.substr(comma + 1);
-            
+
             int columnCount = 0;
-            
+
             while (comma != -1) {
                 comma = (int)line.find(",");
-                
+
                 //string before first comma
                 std::string value = line.substr(0, line.find(","));
-                
+
                 //if first line & first column, should be "_id"
                 if (columnCount == 0) {
                     if (value != "_id") {
@@ -328,7 +313,7 @@ Table::Table(std::string fileName) {
                     }
                 }
                 addColumn(value);
-                
+
                 //remove first string and comma from line for next iteration
                 line = line.substr(line.find(",") + 1);
                 columnCount++;
@@ -338,9 +323,14 @@ Table::Table(std::string fileName) {
         else {
             addRow(line);
         }
-        
+
         lineCount++;
     }
+}
+
+//changes tableName to specified name
+void Table::setTableName(std:string name){
+    tableName=name;
 }
 
 //get table string from getSerializedTable
@@ -349,12 +339,12 @@ Table::Table(std::string fileName) {
 void Table::saveTable(std::string fileName){
     std::ofstream save_file;
     save_file.open(fileName);
-    
+
     if (!save_file.is_open()) {
         throw TableException("File did not open correctly");
     }
     save_file << getSerializedTable();
-    
+
     save_file.close();
 }
 
