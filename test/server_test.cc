@@ -68,17 +68,17 @@ void add_row(std::string table_name) {
 }
 
 void sanity_test() {
-  std::thread t1(read_table, "sample.csv");
+  std::thread t1(read_table, "sample");
   t1.join();
-  std::thread t2(update_table, "sample.csv");
+  std::thread t2(update_table, "sample");
   t2.join();
-  std::thread t3(read_table, "sample.csv");
+  std::thread t3(read_table, "sample");
   t3.join();
-  std::thread t4(add_row, "sample.csv");
+  std::thread t4(add_row, "sample");
   t4.join();
-  std::thread t5(add_column, "sample.csv");
+  std::thread t5(add_column, "sample");
   t5.join();
-  std::thread t6(read_table, "sample.csv");
+  std::thread t6(read_table, "sample");
   t6.join();
 }
 
