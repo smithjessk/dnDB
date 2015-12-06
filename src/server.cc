@@ -176,11 +176,10 @@ void declare_routes(crow::SimpleApp &app) {
     try {
       std::string table_name = body["table_name"].s();
       std::string statement = body["statement"].s();
-      // struct stmt = parse(statement);
       if (!manager.table_exists(table_name)) {
         return crow::response(400, "table not found");
       }
-      /*table_connection *conn = manager.get_conn(table_name);
+      table_connection *conn = manager.get_conn(table_name);
       uint32_t id = manager.get_next_query_id();
       query *q = new query(id, DELETE);
       q->set_data(table_name);
@@ -189,7 +188,7 @@ void declare_routes(crow::SimpleApp &app) {
         return crow::response(400, response->data);
       }
       std::string data = response->data;
-      delete response;*/
+      delete response;
       return crow::response(statement);
     } catch (int n) {
       return crow::response(500);

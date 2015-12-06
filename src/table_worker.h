@@ -40,6 +40,10 @@ class table_worker {
     }
   }
 
+  void perform_sql_query(query &q) {
+    // parsing and stuff go here! 
+  }
+
   /**
    * Processes a given query, saving the table as necessary. If an error is 
    * thrown here, it is caught and then the query is marked as not successful.
@@ -83,8 +87,7 @@ class table_worker {
       }
       case SQL: {
         try {
-          q.set_data("SQL TABLE " + q.data);
-          q.mark_successful();
+          perform_sql_query(q);
         } catch (int n) {
           std::printf("Got error in SQL %s: %d", table_name.c_str(), n);
           q.mark_unsuccessful();
