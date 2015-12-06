@@ -1,21 +1,44 @@
 #include <iostream>
 #include "table.h"
 
+//prints string vector
+void print(std::vector<std::string> v){
+    for(auto i=0;i<v.size();i++){
+        std::cout<<v[i];
+        if(i<v.size()-1){
+            std::cout<<",";
+        }
+    }
+    std::cout<<std::endl;
+}
+
+//prints int vector
+void print(std::vector<int> v){
+    for(auto i=0;i<v.size();i++){
+        std::cout<<v[i];
+        if(i<v.size()-1){
+            std::cout<<",";
+        }
+    }
+    std::cout<<std::endl;
+}
+
 int main() {
-    
-    Table table = *new Table("./data/table.csv");
-    
+
+    Table table = *new Table("table.csv");
+
     try {
         std::cout << "Table name: " << table.getTableName() << std::endl;
         std::cout << std::endl;
-        
+
         std::cout << "Original: " << std::endl;
         std::cout << table.getSerializedTable() << std::endl;
     }
     catch (TableException &cException) {
         std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
     }
-    
+    std::cout << std::endl;
+
     //add row with empty string
     try {
         std::cout << "Adding row with empty string..." << std::endl;
@@ -25,7 +48,8 @@ int main() {
     catch (TableException &cException) {
         std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
     }
-    
+    std::cout << std::endl;
+
     //add row with one extra element
     try {
         std::cout << "Adding row one extra element..." << std::endl;
@@ -35,7 +59,8 @@ int main() {
     catch (TableException &cException) {
         std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
     }
-    
+    std::cout << std::endl;
+
     //add row with an (invalid) empty element
     try {
         std::cout << "Adding row an empty element..." << std::endl;
@@ -45,7 +70,8 @@ int main() {
     catch (TableException &cException) {
         std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
     }
-    
+    std::cout << std::endl;
+
     //add row with no given ID
     try {
         std::cout << "Adding row with no given ID..." << std::endl;
@@ -55,7 +81,8 @@ int main() {
     catch (TableException &cException) {
         std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
     }
-    
+    std::cout << std::endl;
+
     //add row with custom ID 6
     try {
         std::cout << "Adding same row with custom ID 6..." << std::endl;
@@ -65,7 +92,8 @@ int main() {
     catch (TableException &cException) {
         std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
     }
-    
+    std::cout << std::endl;
+
     //add row with custom ID 6, should throw exception
     try {
         std::cout << "Adding same row with custom ID 6..." << std::endl;
@@ -75,7 +103,18 @@ int main() {
     catch (TableException &cException) {
         std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
     }
-    
+    std::cout << std::endl;
+
+    //get row with id 5
+    try {
+        std::cout << "Getting row with id 5..." << std::endl;
+        print(table.getRow(5));
+    }
+    catch (TableException &cException) {
+        std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
+    }
+    std::cout << std::endl;
+
     //remove row with ID 5
     try {
         std::cout << "Remove row with ID 5..." << std::endl;
@@ -85,7 +124,19 @@ int main() {
     catch (TableException &cException) {
         std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
     }
-    
+    std::cout << std::endl;
+
+    //get row with id 5 (doesnt exist)
+    try {
+        std::cout << "Getting row with id 5 (which should be already removed)..." << std::endl;
+        print(table.getRow(5));
+    }
+    catch (TableException &cException) {
+        std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
+    }
+    std::cout << std::endl;
+
+
     //add row with no given ID, ID should be 7
     try {
         std::cout << "Adding row with no given ID..." << std::endl;
@@ -95,7 +146,8 @@ int main() {
     catch (TableException &cException) {
         std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
     }
-    
+    std::cout << std::endl;
+
     //print row with ID 3
     try {
         std::cout << "Get row with ID 3..." << std::endl;
@@ -110,7 +162,8 @@ int main() {
     catch (TableException &cException) {
         std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
     }
-    
+    std::cout << std::endl;
+
     //print row with ID 100
     try {
         std::cout << "Get row with ID 100..." << std::endl;
@@ -125,7 +178,8 @@ int main() {
     catch (TableException &cException) {
         std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
     }
-    
+    std::cout << std::endl;
+
     //remove row with ID 100
     try {
         std::cout << "Remove row with ID 100..." << std::endl;
@@ -135,10 +189,11 @@ int main() {
     catch (TableException &cException) {
         std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
     }
-    
+    std::cout << std::endl;
+
     try {
         std::cout << "Saving table into save.csv..." << std::endl;
-        table.saveTable("./data/save.csv");
+        table.saveTable("save.csv");
     }
     catch (TableException &cException) {
         std::cerr << "A table exception occurred (" << cException.getError() << ")\n" << std::endl;
