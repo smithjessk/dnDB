@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <stdexcept>
 
 #include "config_reader.h"
 #include "table_worker.h"
@@ -241,7 +242,7 @@ int main(int argc, char** argv) {
       number_initial_tables = 10;
       initial_table_port = 5555;
     }
-  } catch (int n) {
+  } catch (exception e) {
     std::cout << "Could not read config file. Using defaults" << std::endl;
     port = 8080;
     number_initial_tables = 10;
