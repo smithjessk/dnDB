@@ -10,7 +10,9 @@
 
 class worker_manager {
  private:
+  std::string path_to_directory;
   uint32_t queries_filed;
+  uint32_t next_table_port;
   std::unordered_map<std::string, table_worker*> workers;
   std::unordered_map<std::string, table_connection*> conns;
 
@@ -19,6 +21,8 @@ class worker_manager {
     workers.reserve(10); 
     conns.reserve(10);
     queries_filed = 0;
+    next_table_port = 5555;
+    path_to_directory = "./data/";
   };
 
   void set_initial_size(int size) {
@@ -26,8 +30,24 @@ class worker_manager {
     conns.reserve(size);
   }
 
+  void set_data_directory(std::string dir) {
+    path_to_directory = dir;
+  }
+
+  void set_initial_port(uint32_t port) {
+    next_table_port = port;
+  }
+
+  std::string get_data_directory() {
+    return path_to_directory;
+  }
+
   uint32_t get_next_query_id() {
     return queries_filed++;
+  }
+
+  uint32_t get_next_port() {
+    return next_table_port++;
   }
 
   void add(table_worker *tw, table_connection *tc) {

@@ -9,6 +9,27 @@
 
 worker_manager manager;
 
+void create_worker(std::string table_name){
+  std::string path = manager.get_data_directory() + table_name + ".csv";
+  uint32_t port = manager.get_next_port();
+  bool bound = false;
+  table_worker *tw = NULL;
+  while (!bound) {
+    try {
+      tw = new table_worker(path, port);
+      bound = true;
+    } catch (...) {
+      std::printf("Port %d in use. Trying next one...\n", port);
+      port = manager.get_next_port();
+    }
+  }
+  if (tw == NULL) {
+    throw "Could not create table worker";
+  }
+  table_connection *tc = new table_connection(tw->get_port());
+  manager.add(tw, tc);
+}
+
 /**
  * Return a string that is used in table_worker.h to update a value in the 
  * table
@@ -44,6 +65,12 @@ query *send_and_get_response(table_connection *conn, query *q) {
   return new query((char *) reply.data());
 }
 
+void create_file(std::string file_name) {
+  std::ofstream new_table;
+  new_table.open(file_name);
+  new_table.close();
+}
+
 void declare_routes(crow::SimpleApp &app) {
   CROW_ROUTE(app, "/ping")
   .methods("GET"_method)
@@ -62,11 +89,14 @@ void declare_routes(crow::SimpleApp &app) {
     if (!manager.table_exists(table_name)) {
       return crow::response(400, "table not found");
     }
-    uint32_t id = manager.get_next_query_id();
-    query *q = new query(id, CREATE);
-    q->set_data(table_name);
-    // manager.create_table(q);
-    // create_worker(q);
+    try {
+      create_file(manager.get_data_directory() + table_name + ".csv");
+      create_worker(table_name);
+    } catch (std::string s) {
+      return crow::response(500);
+    } catch (int n) {
+      return crow::response(500);
+    }
     return crow::response(table_name);
   });
 
@@ -257,30 +287,45 @@ void declare_routes(crow::SimpleApp &app) {
 
 int main(int argc, char** argv) {
   int port, number_initial_tables, initial_table_port;
+  std::string path_to_directory;
   try {
-    if(argc >= 2 && std::ifstream(argv[1])){
+    if (argc >= 2 && std::ifstream(argv[1])){
       std::unordered_map<std::string, std::string> config_map = read(argv[1]);
       port = stoi(config_map.at("host_port"));
       number_initial_tables = stoi(config_map.at("number_initial_tables"));
       initial_table_port = stoi(config_map.at("initial_table_port"));
+      path_to_directory = config_map.at("path_to_directory");
+      if (path_to_directory.substr(path_to_directory.length()-1, 1) != "/") {
+        path_to_directory += "/";
+      }
     } else {
       std::cout << "Could not read config file. Using defaults" << std::endl;
       port = 8080;
       number_initial_tables = 10;
       initial_table_port = 5555;
+      path_to_directory = "./data/";
     }
   } catch (std::exception e) {
     std::cout << "Could not read config file. Using defaults" << std::endl;
     port = 8080;
     number_initial_tables = 10;
     initial_table_port = 5555;
+    path_to_directory = "./data/";
   }
   manager.set_initial_size(number_initial_tables);
+  manager.set_data_directory(path_to_directory);
+  manager.set_initial_port(initial_table_port);
   crow::SimpleApp app;
-  int socket_port = initial_table_port;
-  table_worker tw1("./data/sample.csv", socket_port);
-  table_connection tc1(tw1.get_port());
-  manager.add(&tw1, &tc1);
+  create_worker("sample");
   declare_routes(app);
-  app.port(port).multithreaded().run();
+  bool connected = false;
+  while (!connected) {
+    try {
+      app.port(port).multithreaded().run();
+      connected = true;
+    } catch (...) {
+      std::printf("Port %d in use. Trying next one...\n", port);
+      port++;
+    }
+  }
 }

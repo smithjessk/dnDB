@@ -161,22 +161,8 @@ class table_worker {
     connected(false),
     table(file_path) {
       table_name = table.getTableName();
-      while (!connected) {
-        try {
-          input_socket = zmq::socket_t(context, ZMQ_REP);
-          input_socket.bind(get_bound_address());
-          connected = true;
-        } catch (int n) {
-          std::printf("Got error %d\n", n);
-          port++;
-        } catch (zmq::error_t error) {
-          std::printf("%s in use. Trying next port...\n", 
-            get_bound_address().c_str());
-          port++;
-          std::printf("next port is %d\n", port);
-          std::printf("%s\n", get_bound_address().c_str());
-        }
-      }
+      input_socket = zmq::socket_t(context, ZMQ_REP);
+      input_socket.bind(get_bound_address());
       std::printf("Successfully bound to address %s\n", 
         get_bound_address().c_str());
       t = std::thread([this] { process_messages(); });
