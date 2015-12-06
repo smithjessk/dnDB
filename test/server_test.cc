@@ -38,7 +38,18 @@ void delete_table(std::string table_name) {
   curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8080/table/delete");
   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
   curl_easy_perform(curl);
-  std::printf("\n"); 
+  std::printf("\n");
+}
+
+void create_table(std::string table_name) {
+  Json::Value to_send;
+  to_send["table_name"] = table_name;
+  std::string data = to_send.toStyledString();
+  CURL *curl = curl_easy_init();
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8080/table/create");
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+  curl_easy_perform(curl);
+  std::printf("\n");
 }
 
 void add_column(std::string table_name) {
@@ -106,9 +117,20 @@ void invalid_server_name_test(std::string table_name) {
   std::printf("\n");
 }
 
+void delete_read_test(std::string table_name) {
+  delete_table(table_name);
+  read_table(table_name);
+}
+
+void create_test(std::string table_name) {
+  create_table(table_name);
+  read_table(table_name);
+}
+
 int main() {
-  sanity_test();
-  // quote_test("sample");
+  // sanity_test();
   // invalid_server_name_test("sample");
+  // delete_read_test("sample");
+  create_test("sampleA");
   return 0;
 }

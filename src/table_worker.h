@@ -51,6 +51,7 @@ class table_worker {
   }
 
   sql_query parse_sql_query(std::string c) {
+    std::printf("Sql query = %s\n", c.c_str());
     std::vector<std::string> sqlCommand;
     char delimiter1 = ' ';
     char delimiter2 = ',';
@@ -152,6 +153,7 @@ class table_worker {
       }
       case SQL: {
         try {
+          std::printf("Performing SQL query\n");
           perform_sql_query(q);
         } catch (...) {
           std::printf("Got error in SQL %s", table_name.c_str());

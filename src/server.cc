@@ -86,9 +86,6 @@ void declare_routes(crow::SimpleApp &app) {
       return crow::response(400, "no body found"); // Bad request
     }
     std::string table_name = body["table_name"].s();
-    if (!manager.table_exists(table_name)) {
-      return crow::response(400, "table not found");
-    }
     try {
       create_file(manager.get_data_directory() + table_name + ".csv");
       create_worker(table_name);
@@ -211,7 +208,7 @@ void declare_routes(crow::SimpleApp &app) {
       }
       table_connection *conn = manager.get_conn(table_name);
       uint32_t id = manager.get_next_query_id();
-      query *q = new query(id, DELETE);
+      query *q = new query(id, SQL);
       q->set_data(table_name);
       query *response = send_and_get_response(conn, q);
       if (!response->successful) {
