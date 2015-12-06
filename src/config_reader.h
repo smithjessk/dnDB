@@ -14,12 +14,6 @@ std::unordered_map<std::string, std::string> read(std::string file_name);
 std::string remove_end_space(std::string s); //removes spaces after the last non-space character of a string
 std::string remove_beginning_space(std::string s); //removes spaces before the first non-space character of a string
 
-//used for testing functionality
-/*int main(){
-	read("example.txt");
-	return 0;
-}*/
-
 //creates a map of stuff to the left side of the equals sign to stuff to the right side of the equals sign
 std::unordered_map<std::string, std::string> read(std::string file_name){
 	

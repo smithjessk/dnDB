@@ -9,10 +9,6 @@
 
 worker_manager manager;
 
-bool contains_quote(std::string s) {
-  return s.find('"') != std::string::npos;
-}
-
 /**
  * Return a string that is used in table_worker.h to update a value in the 
  * table
