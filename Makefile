@@ -7,10 +7,12 @@ NORMAL_FLAGS = $(COMPILER_OPTIONS) $(LINKED_LIBRARIES)
 DEBUG_FLAGS = -O0 -g
 
 MAIN_EXEC = bin/server
+CLI_EXEC = bin/cli
 
 all:
 	mkdir -p bin
 	$(CXX_DEFAULT) -o $(MAIN_EXEC) src/server.cc $(NORMAL_FLAGS)
+	$(CXX_DEFAULT) -o $(CLI_EXEC) deps/jsoncpp.cpp src/interface.cc $(NORMAL_FLAGS)
 
 clean:
 	rm -rf bin
@@ -18,6 +20,7 @@ clean:
 fancy:
 	mkdir -p bin
 	$(CXX_FANCY) -o $(MAIN_EXEC) src/server.cc $(NORMAL_FLAGS)
+	$(CXX_FANCY) -o $(CLI_EXEC) deps/jsoncpp.cpp src/interface.cc $(NORMAL_FLAGS)
 
 debug:
 	mkdir -p bin
