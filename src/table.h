@@ -191,10 +191,13 @@ void Table::addColumn(std::string colName){
 }
 
 //iteralte through columns and erase all instances linked to given ID
-//pre: id is valid int. CURRENTLY NO IMPLEMENTATION FOR IF ID IS NOT IN ID LIST~~~~~!!!!!!!~~~~
+//pre: id is valid int.
 //post: removes given row. removes row ID from ID list.
 void Table::removeRow(int id){
     std::vector<std::string> cols = getColNames();
+    if(std::find(idValues.begin(),idValues.end(),id) == idValues.end()){ //not in range
+        throw TableException("No row with given ID");
+    }
     for(auto k:cols){
         masterTable[k].erase(id);
     }
@@ -203,20 +206,23 @@ void Table::removeRow(int id){
 
 }
 
+//remove column given its name
+//pre: column exists. OTHERWISE SHOULD PROB Print EXCEPTION/ERROR!~~~!!!!!!!~~~~~~!!!!~~~~
+//post: remove instances of colName from both table and colValues.
+void Table::removeColumn(std::string colName){
+    if(std::find(colValues.begin(),colValues.end(),colName) == colValues.end()){ //not in range
+        throw TableException("No column with given name");
+    }
+    masterTable.erase(colName);
+    int pos = std::find(colValues.begin(),colValues.end(),colName)-colValues.begin();
+    colValues.erase(colValues.begin()+pos);
+}
+
 //sets element at given row and column to specified value
 //pre: rowID and colID are valid. OTHERWISE SOME EXCEPTION/WARNING SHOULD BE SHOWN~!~~~~~~~~!~~~~!~!!
 //post: update mastertable with the new value at desired position.
 void Table::setElement(int rowID, std::string colID, std::string newValue){
     masterTable[colID][rowID]=newValue;
-}
-
-//remove column given its name
-//pre: column exists. OTHERWISE SHOULD PROB Print EXCEPTION/ERROR!~~~!!!!!!!~~~~~~!!!!~~~~
-//post: remove instances of colName from both table and colValues.
-void Table::removeColumn(std::string colName){
-    masterTable.erase(colName);
-    int pos = std::find(colValues.begin(),colValues.end(),colName)-colValues.begin();
-    colValues.erase(colValues.begin()+pos);
 }
 
 //returns number of rows in current table
@@ -245,10 +251,13 @@ std::vector<std::string> Table::getColNames(){
 }
 
 //return vector of row values(including "" uninitialized ones) at a specific ID
-//pre: id is valid(range).. SHOULD PROBABLY DEAL WITH EXCEPTIONS ~~~~!!!!!!!!~!!!!!!!!~~~~~~
+//post: throws exception of no such id exists
 std::vector<std::string> Table::getRow(int id){
     std::vector<std::string> row;
     std::vector<std::string> cols = getColNames();
+    if(std::find(idValues.begin(),idValues.end(),id) == idValues.end()){ //not in range
+        throw TableException("No row with given ID");
+    }
     for(auto k:cols){
         row.push_back(masterTable[k][id]);
     }
@@ -260,6 +269,10 @@ std::vector<std::string> Table::getRow(int id){
 std::vector<std::string> Table::getColumn(std::string colName){
     std::vector<std::string> col;
     std::vector<int> row = getIDValues();
+    if(std::find(colValues.begin(),colValues.end(),colName) == colValues.end()){ //not in range
+        throw TableException("No column with given name");
+    }
+
     for(auto k:idValues){
         col.push_back(masterTable[colName][k]);
     }
