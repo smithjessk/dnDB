@@ -209,14 +209,14 @@ void declare_routes(crow::SimpleApp &app) {
       table_connection *conn = manager.get_conn(table_name);
       uint32_t id = manager.get_next_query_id();
       query *q = new query(id, SQL);
-      q->set_data(table_name);
+      q->set_data(statement);
       query *response = send_and_get_response(conn, q);
       if (!response->successful) {
         return crow::response(400, response->data);
       }
       std::string data = response->data;
       delete response;
-      return crow::response(statement);
+      return crow::response(data);
     } catch (int n) {
       return crow::response(500);
     }

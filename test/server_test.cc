@@ -78,18 +78,18 @@ void add_row(std::string table_name) {
   std::printf("\n"); 
 }
 
-void sanity_test() {
-  std::thread t1(read_table, "sample");
+void sanity_test(std::string table_name) {
+  std::thread t1(read_table, table_name);
   t1.join();
-  std::thread t2(update_table, "sample");
+  std::thread t2(update_table, table_name);
   t2.join();
-  std::thread t3(read_table, "sample");
+  std::thread t3(read_table, table_name);
   t3.join();
-  std::thread t4(add_row, "sample");
+  std::thread t4(add_row, table_name);
   t4.join();
-  std::thread t5(add_column, "sample");
+  std::thread t5(add_column, table_name);
   t5.join();
-  std::thread t6(read_table, "sample");
+  std::thread t6(read_table, table_name);
   t6.join();
 }
 
@@ -127,10 +127,38 @@ void create_test(std::string table_name) {
   read_table(table_name);
 }
 
+void multiple_tables_test(std::string name_a, std::string name_b) {
+  create_test(name_b);
+  std::thread t1(read_table, name_a);
+  std::thread t2(read_table, name_b);
+  t1.join();
+  t2.join();
+}
+
+void sql_test(std::string table_name, std::vector<std::string> col_names) {
+  std::string statement = "SELECT ";
+  for (size_t i = 0; i < col_names.size() - 1; i++) {
+    statement += col_names.at(i) + ",";
+  }
+  statement += col_names.at(col_names.size() - 1) + " FROM " + table_name;
+  Json::Value to_send;
+  to_send["table_name"] = table_name;
+  to_send["statement"] = statement;
+  std::string data = to_send.toStyledString();
+  CURL *curl = curl_easy_init();
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8080/table/sql");
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+  curl_easy_perform(curl);
+  std::printf("\n");
+}
+
 int main() {
-  // sanity_test();
+  // sanity_test("sample");
   // invalid_server_name_test("sample");
   // delete_read_test("sample");
-  create_test("sampleA");
+  // create_test("sampleA");
+  // multiple_tables_test("sample", "sampleA");
+  std::vector<std::string> col_names = {"\"name\"", "\"age\""};
+  sql_test("sample", col_names);
   return 0;
 }
