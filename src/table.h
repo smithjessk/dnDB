@@ -212,7 +212,7 @@ Table::Table(std::string fileName) {
     
     //if there is a slash, exclude directory
     if (slashIndexLast != -1) {
-        tableName = fileName.substr(slashIndexLast + 1, fileName.find(".csv"));
+        tableName = fileName.substr(slashIndexLast + 1, fileName.find(".csv") - (slashIndexLast + 1));
     }
     else {
         tableName = fileName.substr(0, fileName.find(".csv"));
