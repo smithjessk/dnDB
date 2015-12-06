@@ -1,35 +1,36 @@
-#ifndef CONFIG_READER_H
-#define CONFIG_READER_H
-
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <unordered_map>
-
-using namespace std;
 
 /*
 take in .txt file with the format option_name = value
 return an unordered_map of option_name to value
 */
 
-string remove_space(string s); //removes all space from a string
-unordered_map<string, string> read(string file_name); 
+std::string remove_space(std::string s); //removes all space from a string
+std::unordered_map<std::string, std::string> read(std::string file_name); 
 //creates a map of stuff to the left side of the equals sign to stuff to the right side of the equals sign
-string remove_end_space(string s); //removes spaces after the last non-space character of a string
-string remove_beginning_space(string s); //removes spaces before the first non-space character of a string
+std::string remove_end_space(std::string s); //removes spaces after the last non-space character of a string
+std::string remove_beginning_space(std::string s); //removes spaces before the first non-space character of a string
+
+//used for testing functionality
+/*int main(){
+	read("example.txt");
+	return 0;
+}*/
 
 //creates a map of stuff to the left side of the equals sign to stuff to the right side of the equals sign
-unordered_map<string, string> read(string file_name){
+std::unordered_map<std::string, std::string> read(std::string file_name){
 	
 	//intialize the map that will be returned
-	unordered_map<string, string> map;
+	std::unordered_map<std::string, std::string> map;
 	
 	//initialize a string for reading through the file
-	string line;
+	std::string line;
 	
 	//initialize the file
-	ifstream myfile(file_name);
+	std::ifstream myfile(file_name);
 	
 	//makes sure the file was able to be opened
 	if (myfile.is_open())
@@ -60,12 +61,16 @@ unordered_map<string, string> read(string file_name){
 			}
 			
 			//split the string into twos strings: one to the left of the equals sign, one to the right
-			string part1 = line.substr(0,loc);
-			string part2 = line.substr(loc+1,len-loc-1);
+			std::string part1 = line.substr(0,loc);
+			std::string part2 = line.substr(loc+1,len-loc-1);
 			
 			//remove unnecessary space from the two strings
 			part1 = remove_end_space(part1);
 			part2 = remove_beginning_space(part2);
+			
+			//the next two lines can be used for testing
+			//cout << "part1 = " << part1 << endl;
+			//cout << "part2 = " << part2 << endl;
 			
 			//add an entry to the unordered map
 			map[part1] = part2;
@@ -82,8 +87,20 @@ unordered_map<string, string> read(string file_name){
 	return map;
 }
 
+//removes all spaces from a string, probably not going to be implemented
+std::string remove_space(std::string s){
+	int len = s.length();
+	std::string new_string = "";
+	for(int i = 0; i < len; i++){
+		if(s.substr(i,1) != " "){
+			new_string += s.substr(i,1);
+		}
+	}
+	return new_string;
+}
+
 //removes spaces after the last non-space character of a string
-string remove_end_space(string s){
+std::string remove_end_space(std::string s){
 	int len = s.length();
 	while(s.substr(len-1,1) == " "){
 		s = s.substr(0, len-1);
@@ -93,12 +110,10 @@ string remove_end_space(string s){
 }
 
 //removes spaces before the first non-space character of a string
-string remove_beginning_space(string s){
+std::string remove_beginning_space(std::string s){
 	int len = s.length();
 	while(s.substr(0,1) == " "){
 		s = s.substr(1, len-1);
 	}
 	return s;
 }
-
-#endif // CONFIG_READER_H
