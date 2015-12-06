@@ -132,6 +132,7 @@ class table_worker {
           int row_id = stoi(parts.at(1));
           std::string value = parts.at(2);
           table.setElement(row_id, col_name, value);
+          table.saveTable(file_path);
           q.set_data("table updated");
           q.mark_successful();
         } catch (...) {
@@ -161,22 +162,26 @@ class table_worker {
       case ADD_COLUMN: {
         try {
           table.addColumn("\"" + q.data + "\"");
+          table.saveTable(file_path);
           q.mark_successful();
           q.set_data("column added");
         } catch (...) {
           std::printf("Got error in ADD COLUMN: %s", table_name.c_str());
           q.mark_unsuccessful();
         }
+        break;
       }
       case ADD_ROW: {
         try {
           table.addRow(q.data);
+          table.saveTable(file_path);
           q.mark_successful();
           q.set_data("row added");
         } catch (...) {
           std::printf("Got error in ADD ROW: %s", table_name.c_str());
           q.mark_unsuccessful();
         }
+        break;
       }
       default: {
         std::printf("Got unknown query type on table %s\n", 
@@ -241,9 +246,6 @@ class table_worker {
   ~table_worker() {
     done = true;
     while(processing_request) {}
-    if (!deleted_table) {
-      table.saveTable(file_path);
-    }
   }
 
   /**
