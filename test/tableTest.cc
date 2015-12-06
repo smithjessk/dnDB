@@ -23,15 +23,17 @@ void print(std::vector<int> v){
 }
 
 int main(){
-    Table table("table.csv");
-    //table.addColumn("\"newColumn\"");
-    //table.addRow(5,"5,\"James\",\"16\",y");
-    //table.addColumn("\"name\"");
-    table.addRow("77,\"James\",\"16\",\"none\"");
+    Table table("table.csv");                               //constructor test
+
+    //table.addRowGivenID(5,"5,\"James\",\"16\",y");        //addRowGivenID test
+
+    table.addRow("77,\"James\",\"16\",\"none\"");         //regular addRow test
     table.addRow("\"Kevin\",\"44\",\"fries\"");
-    //table.addColumn("New Column22");
+/*
+    table.addColumn("New Column22");                        //addColumn test(s)
+    table.addColumn("c1");
+*/
     table.addColumn("\"New Column22\"");
-    //table.addColumn("c1");
     table.addColumn("\"Last Name\"");
     table.addColumn("\"New Column\"");
     table.addRow("\"Jack\",\"54\",\"cucumber\",\"22\",\"Smith\",\"cc\"");
@@ -39,10 +41,12 @@ int main(){
 
     table.setElement(4,"\"Last Name\"", "\"Azari\"");
     //table.addColumn("z");
-    print(table.getRow(4));
+    print(table.getRow(4));                                 //getRow test
+    print(table.getColumn("\"food\""));                     //getColumn test
 
-    std::cout<<table.getSerializedTable()<<std::endl;
+    //std::cout<<table.getSerializedTable()<<std::endl;     //table test
 
-    table.saveTable("save.csv");
+    table.saveTable("save.csv");                            //save test
+
     return 0;
 }
