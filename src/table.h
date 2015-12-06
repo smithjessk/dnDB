@@ -36,6 +36,8 @@ public:
     std::string getSerializedTable();
 };
 
+//converts table to a single string (\n seperated lines)
+//post: returns the table as a string
 std::string Table::getSerializedTable() {
     std::string table = "";
     
@@ -89,14 +91,15 @@ std::vector<std::string> split(std::string s){
     return result;
 }
 
+//adds a new row at with specified ID to table
+//pre: addRow functions without error; CSV used by addRow was properly formatted
+//post: exceptions. otherwise adds row to extracted/deduced(from maxID) ID. used 
+//      id is pushed to idValues. updates maxID at the end.
 void Table::addRowGivenID(int id, std::string CSV){
     std::vector<std::string> rows;
     std::vector<std::string> cols = getColNames();
     
     rows=split(CSV);
-    
-    //FOO MUST BE SORTED BY COLS (Corresponding column to parsed value aka name:"jess", age:"14")
-    //THROW EXCEPTION IF SIZE MISMATCH
     
     if (rows.size() != cols.size()) {
         throw TableException("Row/column size mismatch");
@@ -113,6 +116,11 @@ void Table::addRowGivenID(int id, std::string CSV){
     maxID++;
 }
 
+//the method thats always called first for adding a row. From CSV, figure out ID to use, 
+//      and call addRowGivenID
+//pre: CSV properly formatted. order specified matches column order.
+//post: if no ID specified in CSV, calls addRowGivenID with maxID, otherwise exctracts 
+//      ID and calls same with found ID
 void Table::addRow(std::string CSV) {
     std::vector<std::string> row = split(CSV);
     if (row.size() == 0) {
@@ -144,12 +152,19 @@ void Table::addRow(std::string CSV) {
     }
 }
 
+//add column given name to table
+//pre: 
+//post: if colName not already in use, adds to 
 void Table::addColumn(std::string colName){
     masterTable[colName];
     
     //if column name is unique
+    //add it to colValues
+    //else just do nothing. SHOULD PROBABLY CHANGE THIS TO SHOW AN ERROR/WARNING TOO!~~!~!~!~~!~!~!~
     if (std::find(colValues.begin(),colValues.end(),colName) == colValues.end()) {
         colValues.push_back(colName);
+    }else{
+        return;
     }
     
     std::unordered_map<int,std::string> temp;
@@ -160,6 +175,9 @@ void Table::addColumn(std::string colName){
     }
 }
 
+//iteralte through columns and erase all instances linked to given ID
+//pre: id is valid int. CURRENTLY NO IMPLEMENTATION FOR IF ID IS NOT IN ID LIST~~~~~!!!!!!!~~~~
+//post: removes given row. removes row ID from ID list.
 void Table::removeRow(int id){
     std::vector<std::string> cols = getColNames();
     for(auto k:cols){
@@ -170,32 +188,44 @@ void Table::removeRow(int id){
     
 }
 
+//sets element at given row and column to specified value
+//pre: rowID and colID are valid. OTHERWISE SOME EXCEPTION/WARNING SHOULD BE SHOWN~!~~~~~~~~!~~~~!~!!
+//post: update mastertable with the new value at desired position.
 void Table::setElement(int rowID, std::string colID, std::string newValue){
     masterTable[colID][rowID]=newValue;
 }
 
+//remove column given its name
+//pre: column exists. OTHERWISE SHOULD PROB Print EXCEPTION/ERROR!~~~!!!!!!!~~~~~~!!!!~~~~
+//post: remove instances of colName from both table and colValues.
 void Table::removeColumn(std::string colName){
     masterTable.erase(colName);
     int pos = std::find(colValues.begin(),colValues.end(),colName)-colValues.begin();
     colValues.erase(colValues.begin()+pos);
 }
 
+//returns number of rows in current table
 int Table::getNumRows(){
     return idValues.size();
 }
 
+//returns number of cols in current table
 int Table::getNumCols(){
     return colValues.size();
 }
 
+//returns name of table 
 std::string Table::getTableName() {
     return tableName;
 }
 
+//returns colValues vector (stores column names including _id)
 std::vector<std::string> Table::getColNames(){
     return colValues;
 }
 
+//return vector of row values(including "" uninitialized ones) at a specific ID
+//pre: id is valid(range).. SHOULD PROBABLY DEAL WITH EXCEPTIONS ~~~~!!!!!!!!~!!!!!!!!~~~~~~
 std::vector<std::string> Table::getRow(int id){
     std::vector<std::string> row;
     std::vector<std::string> cols = getColNames();
@@ -205,6 +235,11 @@ std::vector<std::string> Table::getRow(int id){
     return row;
 }
 
+//fucking constructor duh
+//pre: fileName is valid path. Can be either path, or filename in same directory.
+//viktor would know the pre's of this better
+
+//post: table fill out based on file, and named to the same as file name.
 Table::Table(std::string fileName) {
     std::ifstream myFile;
     
@@ -269,6 +304,9 @@ Table::Table(std::string fileName) {
     }
 }
 
+//get table string from getSerializedTable
+//pre: filepath valid
+//post: table save to filepath.
 void Table::saveTable(std::string fileName){
     std::ofstream save_file;
     save_file.open(fileName);
