@@ -145,10 +145,8 @@ class table_worker {
     connected(false),
     table(file_path) {
       table_name = table.getTableName();
-      std::printf("table_name = %s\n", table_name.c_str());
       while (!connected) {
         try {
-          std::printf("Trying to bind...\n");
           input_socket = zmq::socket_t(context, ZMQ_REP);
           input_socket.bind(get_bound_address());
           connected = true;

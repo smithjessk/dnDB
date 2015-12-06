@@ -138,8 +138,9 @@ void lexicalAnalysis(std::string c){
 	}
 	//Other commands not recognized
 	else{
-		std::cout << "Command not found, please type HELP if you need help" << std::endl;
-			interface();
+		std::cout << "Command not found, please type HELP if you need help" << 
+			std::endl;
+		interface();
 	}		
 }
 

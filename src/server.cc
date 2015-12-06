@@ -227,14 +227,20 @@ void declare_routes(crow::SimpleApp &app) {
   });
 }
 
-
 int main(int argc, char** argv) {
   int port, number_initial_tables, initial_table_port;
   try {
-    std::unordered_map<std::string, std::string> map = read(argv[1]);
-    port = stoi(map.at("host_port"));
-    number_initial_tables = stoi(map.at("number_initial_tables"));
-    initial_table_port = stoi(map.at("initial_table_port"));
+    if(argc >= 2 && std::ifstream(argv[1])){
+      std::unordered_map<std::string, std::string> config_map = read(argv[1]);
+      port = stoi(config_map.at("host_port"));
+      number_initial_tables = stoi(config_map.at("number_initial_tables"));
+      initial_table_port = stoi(config_map.at("initial_table_port"));
+    } else {
+      std::cout << "Could not read config file. Using defaults" << std::endl;
+      port = 8080;
+      number_initial_tables = 10;
+      initial_table_port = 5555;
+    }
   } catch (int n) {
     std::cout << "Could not read config file. Using defaults" << std::endl;
     port = 8080;
