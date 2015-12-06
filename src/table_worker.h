@@ -50,43 +50,42 @@ class table_worker {
     }
   }
 
-  sql_query parse_sql_query(std::string c){
+  sql_query parse_sql_query(std::string c) {
     std::vector<std::string> sqlCommand;
-    std::vector<std::string> sqlArgs; // column names
-    std::string tableName;
     char delimiter1 = ' ';
     char delimiter2 = ',';
-    int fromPos = 0;
-    bool secondDelim = false;
     std::string token1, token2;
     std::stringstream ss(c);
     while(getline(ss, token1, delimiter1)){
       if(token1.find(delimiter2)){
         std::stringstream ss2(token1);
-        if(token1 != "FROM"){
-          fromPos++;
-        }
-       while(getline(ss2, token2, delimiter2)){
+        while(getline(ss2, token2, delimiter2)){
           sqlCommand.push_back(token2);
-          if(token2 != "FROM"){
-            fromPos++;
-          }
-          secondDelim = true;
         }
-        if(secondDelim) {
-          fromPos--;
-        }
-        secondDelim = false;
-      } else{
+      }else{
         sqlCommand.push_back(token1);
       }
     }
-    for(int i = 1; i < fromPos; i++){
-      sqlArgs.push_back(sqlCommand[i]);
+    //basic check for minimum amount of arguments
+    if(sqlCommand.size() < 4){
+      throw "Not enougn commands";
     }
-    tableName = sqlCommand[fromPos + 1];
-    return sql_query(tableName, sqlArgs);
-  };
+    // check if select and from key words are there
+    else if(c.find("SELECT") == -1 && c.find("FROM") == -1){
+      throw "Couldn't find both SELECT and FROM";
+    }
+    else if(c.find("SELECT") > c.find("FROM")){
+      throw "SELEECT after FROM";
+    }
+    else {
+      std::string table_name = sqlCommand.at(sqlCommand.size() - 1);
+      std::vector<std::string> col_names;
+      for (size_t i = 1; i < sqlCommand.size() - 2; i++) {
+        col_names.push_back(sqlCommand.at(i));
+      }
+      return sql_query(table_name, col_names);
+    }
+  }
 
   void perform_sql_query(query &q) {
     sql_query select_query = parse_sql_query(q.data);

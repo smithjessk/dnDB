@@ -13,6 +13,8 @@ void read(std::vector<std::string> command);
 void addColumn(std::vector<std::string> command);
 void update(std::vector<std::string> command);
 void deleteTable(std::vector<std::string> command);
+bool sqlCheck(std::string c);
+void sql(std::string sqlString, std::string table_name);
 
 std::vector<std::string> commandList;
 
@@ -21,11 +23,10 @@ int main(){
 	return 0;
 }
 
-void interface() {
+void interface(){
 	std::string tempCommand;
 	std::cout << "Enter Command: ";
 	getline(std::cin, tempCommand);
-	commandList = std::vector<std::string> (0);
 	lexicalAnalysis(tempCommand);
 }
 
@@ -36,7 +37,9 @@ struct commandArgs{
 
 //check the commands
 void lexicalAnalysis(std::string c){
+	commandList = std::vector<std::string>();
 	char delimiter = ' ';
+	size_t pos = 0;
 	std::string token;
 	std::stringstream ss(c);
 	while(getline(ss, token, delimiter)){
@@ -122,6 +125,23 @@ void lexicalAnalysis(std::string c){
 		}
 		deleteTable(commandList);
 	}
+	//check sql command
+	else if(commandList[0] == "SQL"){
+		if(commandList[1] == "-h"){
+			std::cout << "Use sql commands" << std::endl;
+			std::cout << "Usage: SQL SELECT * FROM table_name" << std::endl;
+			interface();
+		}
+		if(sqlCheck(c)){
+			std::size_t pos = c.find("SELECT");
+			std::string sqlString = c.substr(pos);
+			std::string table_name = commandList[commandList.size()-1];
+			sql(sqlString, table_name);
+		}else{
+			throw "SQL code is invalid";
+			interface();
+		}
+	}
 	//Exit the program
 	else if(commandList[0] == "EXIT"){
 		if(commandList[1] == "-h"){
@@ -138,9 +158,8 @@ void lexicalAnalysis(std::string c){
 	}
 	//Other commands not recognized
 	else{
-		std::cout << "Command not found, please type HELP if you need help" << 
-			std::endl;
-		interface();
+		std::cout << "Command not found, please type HELP if you need help" << std::endl;
+			interface();
 	}		
 }
 
@@ -155,6 +174,7 @@ void create(std::vector<std::string> command){
   	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
  	curl_easy_perform(curl);
 	std::printf("\n");
+	interface();
 }
 
 //read table
@@ -167,6 +187,7 @@ void read(std::vector<std::string> command){
   	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
  	curl_easy_perform(curl);
 	std::printf("\n");
+	interface();
 }
 
 //add column
@@ -180,6 +201,7 @@ void addColumn(std::vector<std::string> command){
   	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
  	curl_easy_perform(curl);
 	std::printf("\n");
+	interface();
 }
 
 //update value
@@ -195,6 +217,7 @@ void update(std::vector<std::string> command){
   	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
  	curl_easy_perform(curl);
 	std::printf("\n");
+	interface();
 }
 
 //delete table
@@ -207,15 +230,50 @@ void deleteTable(std::vector<std::string> command){
   	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
  	curl_easy_perform(curl);
 	std::printf("\n");
+	interface();
 }
 
-void sql(std::vector<std::string> command){
+bool sqlCheck(std::string c) {
+	std::vector<std::string> sqlCommand;
+    char delimiter1 = ' ';
+    char delimiter2 = ',';
+    std::string token1, token2;
+    std::stringstream ss(c);
+    while(getline(ss, token1, delimiter1)){
+      if(token1.find(delimiter2)){
+        std::stringstream ss2(token1);
+       while(getline(ss2, token2, delimiter2)){
+          sqlCommand.push_back(token2);
+        }
+      }else{
+        sqlCommand.push_back(token1);
+      }
+    }
+    //basic check for minimum amount of arguments
+    if(sqlCommand.size() < 4){
+    	return false;
+    }
+    // check if select and from key words are there
+    else if(c.find("SELECT") == -1 && c.find("FROM") == -1){
+    	return false;
+    }
+    else if(c.find("SELECT") > c.find("FROM")){
+    	return false;
+    }
+    else{
+    	return true;
+    }
+}
+
+void sql(std::string sqlString, std::string table_name) {
 	Json::Value to_send;
-  	to_send["table_name"] = commandList[1];
+	to_send["table_name"] = table_name;
+	to_send["statement"] = sqlString;
  	std::string data = to_send.toStyledString();
   	CURL *curl = curl_easy_init();
  	curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8080/table/sql");
   	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
  	curl_easy_perform(curl);
 	std::printf("\n");
+	interface();
 }

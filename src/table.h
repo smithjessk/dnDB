@@ -14,12 +14,13 @@
 
 class Table {
 private:
-    std::string tableName = "";
-    int maxID=0;
+    std::string tableName;
+    int maxID;
     std::unordered_map<std::string, std::unordered_map<int, std::string> > masterTable; //data structure for table
     std::vector<int> idValues;
     std::vector<std::string> colValues;
 public:
+    Table();
     Table(std::string filepath);
     void addRowGivenID(int, std::string);
     void addRow(std::string);
@@ -103,7 +104,11 @@ void Table::addRowGivenID(int id, std::string CSV){
     std::vector<std::string> cols = getColNames();
 
     if(std::find(idValues.begin(),idValues.end(),id) != idValues.end()){
-        throw TableException("ID "+id+" already in use");
+        std::stringstream ss;
+        ss << id;
+        std::string error;
+        ss >> error;
+        throw TableException(error);
     }
     rows=split(CSV);
 
@@ -258,12 +263,22 @@ std::vector<std::string> Table::getColumn(std::string colName){
     return col;
 }
 
+//default constructor for Table class
+//pre: none
+//post: Table object constructed with empty name, maxID = 0, and one column for IDs.
+Table::Table() {
+    tableName = "";
+    maxID = 0;
+    addColumn("_id");
+}
+
 
 //fucking constructor duh
 //pre: fileName is valid path. Can be either path, or filename in same directory.
 //viktor would know the pre's of this better
 
 //post: table fill out based on file, and named to the same as file name.
+//if it was a blank file, add column ID column.
 Table::Table(std::string fileName) {
     std::ifstream myFile;
 
@@ -283,9 +298,16 @@ Table::Table(std::string fileName) {
         tableName = fileName.substr(0, fileName.find(".csv"));
     }
 
+    maxID = 0;
+
     std::string line;
     int lineCount = 0;
     std::string header;
+
+    //if empty file
+    if (myFile.peek() == std::ifstream::traits_type::eof()) {
+        addColumn("_id");
+    }
 
     while (getline(myFile, line)) {
 
@@ -329,7 +351,7 @@ Table::Table(std::string fileName) {
 }
 
 //changes tableName to specified name
-void Table::setTableName(std:string name){
+void Table::setTableName(std::string name){
     tableName=name;
 }
 
