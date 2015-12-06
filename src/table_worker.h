@@ -13,6 +13,16 @@
 #include "query_types.h"
 #include "table.h"
 
+struct sql_query {
+  std::string table_name;
+  std::vector<std::string> column_names;
+
+  sql_query(std::string table_name, std::vector<std::string> column_names) {
+    this->table_name = table_name;
+    this->column_names = column_names;
+  }
+};
+
 class table_worker {
  private:
   std::string file_path;
@@ -40,8 +50,63 @@ class table_worker {
     }
   }
 
+  sql_query parse_sql_query(std::string c){
+    std::vector<std::string> sqlCommand;
+    std::vector<std::string> sqlArgs; // column names
+    std::string tableName;
+    char delimiter1 = ' ';
+    char delimiter2 = ',';
+    int fromPos = 0;
+    bool secondDelim = false;
+    std::string token1, token2;
+    std::stringstream ss(c);
+    while(getline(ss, token1, delimiter1)){
+      if(token1.find(delimiter2)){
+        std::stringstream ss2(token1);
+        if(token1 != "FROM"){
+          fromPos++;
+        }
+       while(getline(ss2, token2, delimiter2)){
+          sqlCommand.push_back(token2);
+          if(token2 != "FROM"){
+            fromPos++;
+          }
+          secondDelim = true;
+        }
+        if(secondDelim) {
+          fromPos--;
+        }
+        secondDelim = false;
+      } else{
+        sqlCommand.push_back(token1);
+      }
+    }
+    for(int i = 1; i < fromPos; i++){
+      sqlArgs.push_back(sqlCommand[i]);
+    }
+    tableName = sqlCommand[fromPos + 1];
+    return sql_query(tableName, sqlArgs);
+  };
+
   void perform_sql_query(query &q) {
-    // parsing and stuff go here! 
+    sql_query select_query = parse_sql_query(q.data);
+    if (this->table_name != select_query.table_name) {
+      throw "Table names don't match";
+    }
+    std::string result = "";
+    for (size_t i = 0; i < select_query.column_names.size(); i++) {
+      std::string c_name = select_query.column_names.at(i);
+      std::vector<std::string> entries = table.getColumn(c_name);
+      result += c_name;
+      result += "\n";
+      for (size_t j = 0; j < entries.size() - 1; j++) {
+        result += entries.at(j) + ",";
+      }
+      result += entries.at(entries.size() - 1);
+      result += "\n";
+    }
+    q.set_data(result);
+    q.mark_successful();
   }
 
   /**
@@ -55,8 +120,8 @@ class table_worker {
         try {
           q.set_data(table.getSerializedTable());
           q.mark_successful();
-        } catch (int n) {
-          std::printf("Got error in READ %s: %d", table_name.c_str(), n);
+        } catch (...) {
+          std::printf("Got error in READ %s", table_name.c_str());
           q.mark_unsuccessful();
         }
         break;
@@ -70,8 +135,8 @@ class table_worker {
           table.setElement(row_id, col_name, value);
           q.set_data("table updated");
           q.mark_successful();
-        } catch (int n) {
-          std::printf("Got error in UPDATE %s: %d", table_name.c_str(), n);
+        } catch (...) {
+          std::printf("Got error in UPDATE %s", table_name.c_str());
           q.mark_unsuccessful();
         }
         break;
@@ -79,8 +144,8 @@ class table_worker {
       case DELETE: {
         try {
           perform_delete(q);
-        } catch (int n) {
-          std::printf("Got error in DELETE %s: %d", table_name.c_str(), n);
+        } catch (...) {
+          std::printf("Got error in DELETE %s", table_name.c_str());
           q.mark_unsuccessful();
         }
         break;
@@ -88,8 +153,8 @@ class table_worker {
       case SQL: {
         try {
           perform_sql_query(q);
-        } catch (int n) {
-          std::printf("Got error in SQL %s: %d", table_name.c_str(), n);
+        } catch (...) {
+          std::printf("Got error in SQL %s", table_name.c_str());
           q.mark_unsuccessful();
         }
         break;
@@ -99,9 +164,8 @@ class table_worker {
           table.addColumn("\"" + q.data + "\"");
           q.mark_successful();
           q.set_data("column added");
-        } catch (int n) {
-          std::printf("Got error in ADD COLUMN: %s: %d", table_name.c_str(), 
-            n);
+        } catch (...) {
+          std::printf("Got error in ADD COLUMN: %s", table_name.c_str());
           q.mark_unsuccessful();
         }
       }
@@ -110,13 +174,15 @@ class table_worker {
           table.addRow(q.data);
           q.mark_successful();
           q.set_data("row added");
-        } catch (int n) {
-          std::printf("Got error in ADD ROW: %s: %d", table_name.c_str(), 
-            n);
+        } catch (...) {
+          std::printf("Got error in ADD ROW: %s", table_name.c_str());
           q.mark_unsuccessful();
         }
       }
       default: {
+        std::printf("Got unknown query type on table %s\n", 
+          table_name.c_str());
+        q.mark_unsuccessful();
         break;
       }
     }
