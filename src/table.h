@@ -103,7 +103,11 @@ void Table::addRowGivenID(int id, std::string CSV){
     std::vector<std::string> cols = getColNames();
 
     if(std::find(idValues.begin(),idValues.end(),id) != idValues.end()){
-        throw TableException("ID "+id+" already in use");
+        std::stringstream ss;
+        ss << id;
+        std::string error;
+        ss >> error;
+        throw TableException(error);
     }
     rows=split(CSV);
 
@@ -329,7 +333,7 @@ Table::Table(std::string fileName) {
 }
 
 //changes tableName to specified name
-void Table::setTableName(std:string name){
+void Table::setTableName(std::string name){
     tableName=name;
 }
 
