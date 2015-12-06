@@ -5,7 +5,8 @@
 #include <unordered_map>
 #include <mutex>
 
-#include "query_types.h"
+#include "table_connection.h"
+#include "table_worker.h"
 
 class worker_manager {
  private:
@@ -34,8 +35,16 @@ class worker_manager {
     conns[tw->get_table_name()] = tc;
   }
 
+  void delete_table(std::string name) {
+    conns[name]->mark_deleted();
+  }
+
   table_connection *get_conn(std::string name) {
     return conns.at(name);
+  }
+
+  bool table_exists(std::string name) {
+    return workers.count(name) > 0 && conns.count(name) > 0;
   }
 };
 

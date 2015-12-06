@@ -18,6 +18,7 @@ class table_worker {
   std::string file_path;
   std::string table_name;
   bool done;
+  bool deleted_table;
   bool processing_request;
   zmq::context_t context;
   zmq::socket_t input_socket;
@@ -26,6 +27,18 @@ class table_worker {
   int port;
   bool connected;
   Table table;
+
+  void perform_delete(query &q) {
+    if (remove(file_path.c_str()) != 0) {
+      std::printf("Got error in DELETE %s: Could not remove file", 
+      table_name.c_str());
+      q.mark_unsuccessful();
+    } else {
+      deleted_table = true;
+      q.set_data("table deleted");
+      q.mark_successful();
+    }
+  }
 
   /**
    * Processes a given query, saving the table as necessary. If an error is 
@@ -51,7 +64,7 @@ class table_worker {
           int row_id = stoi(parts.at(1));
           std::string value = parts.at(2);
           table.setElement(row_id, col_name, value);
-          q.set_data("success");
+          q.set_data("table updated");
           q.mark_successful();
         } catch (int n) {
           std::printf("Got error in UPDATE %s: %d", table_name.c_str(), n);
@@ -61,13 +74,7 @@ class table_worker {
       }
       case DELETE: {
         try {
-          if (remove(file_path.c_str()) != 0) {
-            std::printf("Got error in DELETE %s: Could not remove file", 
-              table_name.c_str());
-            q.mark_unsuccessful();
-          } else {
-            q.mark_successful();  
-          }
+          perform_delete(q);
         } catch (int n) {
           std::printf("Got error in DELETE %s: %d", table_name.c_str(), n);
           q.mark_unsuccessful();
@@ -88,7 +95,7 @@ class table_worker {
         try {
           table.addColumn("\"" + q.data + "\"");
           q.mark_successful();
-          q.set_data("success");
+          q.set_data("column added");
         } catch (int n) {
           std::printf("Got error in ADD COLUMN: %s: %d", table_name.c_str(), 
             n);
@@ -99,7 +106,7 @@ class table_worker {
         try {
           table.addRow(q.data);
           q.mark_successful();
-          q.set_data("success");
+          q.set_data("row added");
         } catch (int n) {
           std::printf("Got error in ADD ROW: %s: %d", table_name.c_str(), 
             n);
@@ -117,9 +124,14 @@ class table_worker {
       zmq::message_t request;
       input_socket.recv(&request);
       query q((char *) request.data());
-      processing_request = true;
-      process(q);
-      processing_request = false;
+      if (deleted_table) {
+        q.mark_unsuccessful();
+        q.set_data("could not perform request; table deleted");
+      } else {
+        processing_request = true;
+        process(q);
+        processing_request = false;  
+      }
       zmq::message_t reply = q.generate_message();
       input_socket.send(reply);
     }
@@ -137,6 +149,7 @@ class table_worker {
   table_worker(std::string file_path, int port)
     : file_path(file_path),
     done(false),
+    deleted_table(false),
     processing_request(false),
     context(1),
     input_socket(context, ZMQ_REP),
@@ -173,8 +186,10 @@ class table_worker {
    */
   ~table_worker() {
     done = true;
-    while(processing_request) {} 
-    table.saveTable(file_path); 
+    while(processing_request) {}
+    if (!deleted_table) {
+      table.saveTable(file_path);
+    }
   }
 
   /**

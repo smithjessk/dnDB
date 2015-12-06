@@ -82,7 +82,33 @@ void sanity_test() {
   t6.join();
 }
 
+void quote_test(std::string table_name) {
+  Json::Value to_send;
+  to_send["table_name"] = table_name;
+  to_send["row"] = "\"Ali\",\"1000\",\"orange\"";
+  std::string data = to_send.toStyledString();
+    CURL *curl = curl_easy_init();
+  curl_easy_setopt(curl, CURLOPT_URL, 
+    "http://localhost:8080/table/add_row");
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+  curl_easy_perform(curl);
+  std::printf("\n"); 
+}
+
+void invalid_server_name_test(std::string table_name) {
+  Json::Value to_send;
+  to_send["table_name"] = table_name + "blablabla";
+  std::string data = to_send.toStyledString();
+  CURL *curl = curl_easy_init();
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8080/table/read");
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+  curl_easy_perform(curl);
+  std::printf("\n");
+}
+
 int main() {
-  sanity_test();
+  // sanity_test();
+  // quote_test("sample");
+  invalid_server_name_test("sample");
   return 0;
 }
