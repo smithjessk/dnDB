@@ -10,6 +10,7 @@
 #include <fstream>
 #include <sstream>
 #include <cmath>
+#include "table_exception.h"
 
 class Table {
 private:
@@ -50,7 +51,6 @@ std::string Table::getSerializedTable() {
     //new line character for next row
     table += "\n";
     
-    //add rows
     //for each row
     for (int i : idValues) {
         std::string row = "";
@@ -65,8 +65,8 @@ std::string Table::getSerializedTable() {
             }
         }
         
-        //new line character for next row
-        table = table + row + "\n";
+        //add row and new line character for next row
+        table += row + "\n";
     }
     
     return table;
@@ -99,7 +99,7 @@ void Table::addRowGivenID(int id, std::string CSV){
     //THROW EXCEPTION IF SIZE MISMATCH
     
     if (rows.size() != cols.size()) {
-        throw "Row/column size mismatch";
+        throw TableException("Row/column size mismatch");
     }
     idValues.push_back(id);
     
@@ -113,28 +113,34 @@ void Table::addRowGivenID(int id, std::string CSV){
     maxID++;
 }
 
-void Table::addRow(std::string CSV){
+void Table::addRow(std::string CSV) {
     std::vector<std::string> row = split(CSV);
-    if(row.size()==0){
-        throw "error1";
+    if (row.size() == 0) {
+        throw TableException("Empty row");
     }
-    if(row[0].size()==0){
-        throw "error2";
+    
+    for (int i = 0; i < row.size(); i++) {
+        if (row[i].size() == 0) {
+            throw TableException("Not a valid element");
+        }
     }
-    if(row[0].substr(0,1)=="\""){
+    
+    if (row[0].substr(0,1) == "\"") {
         std::stringstream ss;
         ss << maxID;
         std::string idString;
         ss >> idString;
-        CSV=idString+","+CSV;
-        addRowGivenID(maxID,CSV);
+        CSV = idString + "," + CSV;
+        addRowGivenID(maxID, CSV);
         return;
-    }else if(!is_number(row[0])){
-        std::cout<<"error3";
+    }
+    else if(!is_number(row[0])) {
+        throw TableException("Not a valid element");
         return;
-    }else{
+    }
+    else {
         int id = std::atoi(row[0].c_str());
-        addRowGivenID(id,CSV);
+        addRowGivenID(id, CSV);
     }
 }
 
@@ -205,7 +211,7 @@ Table::Table(std::string fileName) {
     myFile.open(fileName);
     
     if (!myFile) {
-        throw "No such file in directory.";
+        throw TableException("No such file in directory");
     }
     
     int slashIndexLast = (int)fileName.find_last_of("/");
@@ -244,8 +250,7 @@ Table::Table(std::string fileName) {
                 if (columnCount == 0) {
                     if (value != "_id") {
                         //ERROR: value is not "_id"
-                        std:: string error = "ERROR: value '" + value + "'is not \"_id\"";
-                        throw error;
+                        throw TableException("ERROR: value '" + value + "'is not \"_id\"");
                     }
                 }
                 addColumn(value);
@@ -269,7 +274,7 @@ void Table::saveTable(std::string fileName){
     save_file.open(fileName);
     
     if (!save_file.is_open()) {
-        throw "File did not open correctly.";
+        throw TableException("File did not open correctly");
     }
     save_file << getSerializedTable();
     
