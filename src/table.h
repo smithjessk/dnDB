@@ -108,7 +108,7 @@ void Table::addRowGivenID(int id, std::string CSV){
         ss << id;
         std::string error;
         ss >> error;
-        throw TableException(error);
+        throw TableException("ID "+error+" is already in use");
     }
     rows=split(CSV);
 
@@ -171,7 +171,10 @@ void Table::addColumn(std::string colName){
 
     //if column name is unique
     //add it to colValues
-    //else just do nothing. SHOULD PROBABLY CHANGE THIS TO SHOW AN ERROR/WARNING TOO!~~!~!~!~~!~!~!~
+    //else throw exception
+    if(colName.size()==0){
+        throw TableException("Not a valid Name");
+    }
     if (std::find(colValues.begin(),colValues.end(),colName) == colValues.end()) {
         colValues.push_back(colName);
     }
