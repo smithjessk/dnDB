@@ -8,6 +8,9 @@
 #include "table_connection.h"
 #include "table_worker.h"
 
+/**
+ * Used to combine information about workers and connections.
+ */
 class worker_manager {
  private:
   std::string path_to_directory;

@@ -23,6 +23,10 @@ struct sql_query {
   }
 };
 
+/**
+ * Performs the updates, etc. on the table. Listens on a given port for 
+ * messages and processes them one at a time.
+ */
 class table_worker {
  private:
   std::string file_path;

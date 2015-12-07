@@ -1,6 +1,12 @@
 #ifndef TABLE_CONNECTION_H
 #define TABLE_CONNECTION_H
 
+/**
+ * Contains the ZMQ socket to send messages over and the appropriate values to 
+ * lock on it. Note that it is necessary to lock the socket because it would 
+ * be very bad if multiple things tried to communicate with it at the same 
+ * time! Would either produce undefined behaviour or cause dropped messages.
+ */
 struct table_connection {
   std::string address;
   bool waiting_for_reply;

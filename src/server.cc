@@ -9,6 +9,13 @@
 
 worker_manager manager;
 
+/**
+ * Creates a new table_worker and table_connection for a given table name. 
+ * Looks for the data inside the directory as determined by the field on 
+ * manager.
+ * @param table_name A string representing the table name. Files must have
+ * extension CSV
+ */
 void create_worker(std::string table_name){
   std::string path = manager.get_data_directory() + table_name + ".csv";
   uint32_t port = manager.get_next_port();
@@ -49,6 +56,14 @@ std::string build_update_string(std::string col_name, int row_id,
   return ret_value;
 }
 
+/**
+ * Send the query to the socket specified by table connection and wait for a 
+ * reply. Note that if there is currently a query being sent over the socket,
+ * then this function waits until that query was completed. 
+ * @param  conn A pointer to the table to connect to
+ * @param  q    The query to send
+ * @return      The query object that is the response
+ */
 query *send_and_get_response(table_connection *conn, query *q) {
   zmq::message_t request = q->generate_message();
   std::unique_lock<std::mutex> lock(conn->mutex);
@@ -65,6 +80,11 @@ query *send_and_get_response(table_connection *conn, query *q) {
   return new query((char *) reply.data());
 }
 
+/**
+ * Create an empty file. Note that this will overwrite anything at the given 
+ * address.
+ * @param file_name The full relative path to the desired file.  
+ */
 void create_file(std::string file_name) {
   std::ofstream new_table;
   new_table.open(file_name);
@@ -72,12 +92,19 @@ void create_file(std::string file_name) {
 }
 
 void declare_routes(crow::SimpleApp &app) {
+  /**
+   * Simple route to check if the server is alive.
+   */
   CROW_ROUTE(app, "/ping")
   .methods("GET"_method)
   ([] {
     return "pong";
   });
 
+  /**
+   * Route to create a new table. Expects a table_name field in the passed 
+   * JSON.
+   */
   CROW_ROUTE(app, "/table/create")
   .methods("POST"_method)
   ([](const crow::request &req) {
@@ -97,6 +124,9 @@ void declare_routes(crow::SimpleApp &app) {
     return crow::response(table_name);
   });
 
+  /**
+   * Route to read a given table. Result is returned as a CSV compliant string.
+   */
   CROW_ROUTE(app, "/table/read")
   .methods("POST"_method)
   ([](const crow::request &req) {
@@ -125,6 +155,10 @@ void declare_routes(crow::SimpleApp &app) {
     }
   });
 
+  /**
+   * Update a value in body[table_name]. row_name and col_name identify the 
+   * place to update, and value is the new value.
+   */
   CROW_ROUTE(app, "/table/update")
   .methods("POST"_method)
   ([](const crow::request &req) {
@@ -156,6 +190,10 @@ void declare_routes(crow::SimpleApp &app) {
     }
   });
 
+  /**
+   * Delete the table identified by body[table_name]. Does not delete the 
+   * workers, but does mark them as deleted. 
+   */
   CROW_ROUTE(app, "/table/delete")
   .methods("POST"_method) 
   ([](const crow::request &req) {
@@ -193,6 +231,9 @@ void declare_routes(crow::SimpleApp &app) {
     }
   });
 
+  /**
+   * Compute a SQL query on a given table.
+   */
   CROW_ROUTE(app, "/table/sql")
   .methods("POST"_method)
   ([](const crow::request &req) {
@@ -222,6 +263,9 @@ void declare_routes(crow::SimpleApp &app) {
     }
   });
 
+  /**
+   * Add a column to the given table.
+   */
   CROW_ROUTE(app, "/table/add_column")
   .methods("POST"_method)
   ([](const crow::request &req) {
@@ -251,7 +295,9 @@ void declare_routes(crow::SimpleApp &app) {
     }
   });
 
-
+  /**
+   * Add a row to the given table.
+   */
   CROW_ROUTE(app, "/table/add_row")
   .methods("POST"_method)
   ([](const crow::request &req) {
@@ -282,10 +328,14 @@ void declare_routes(crow::SimpleApp &app) {
   });
 }
 
+/**
+ * Read the config file (if it's there), and open sample.csv. Respond to 
+ * queries as defined by the routes. 
+ */
 int main(int argc, char** argv) {
   int port, number_initial_tables, initial_table_port;
   std::string path_to_directory;
-  try {
+  try { // Accept defaults
     if (argc >= 2 && std::ifstream(argv[1])){
       std::unordered_map<std::string, std::string> config_map = read(argv[1]);
       port = stoi(config_map.at("host_port"));

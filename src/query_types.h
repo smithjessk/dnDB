@@ -33,6 +33,9 @@ struct query {
     this->data = "";
   }
 
+  /**
+   * Used for deserializing from ZMQ messages.
+   */
   query (char *start) {
     id = *((uint32_t*) start);
     start += sizeof(uint32_t);
@@ -51,6 +54,9 @@ struct query {
     data = std::string(start, data_size);
   }
 
+  /**
+   * Need to also update size for the sake of serialization.
+   */
   void set_data(std::string s) {
     this->data_size = s.size();
     this->data = s;
@@ -68,6 +74,9 @@ struct query {
     return sizeof(uint32_t) + sizeof(query_type) + sizeof(bool) + sizeof(uint32_t) + data.size() + 1;
   }
 
+  /**
+   * Create a ZMQ message that will be sent over the wire.
+   */
   zmq::message_t generate_message() {
     zmq::message_t msg(get_total_size());
     char *ptr = (char *) msg.data();
