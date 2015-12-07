@@ -29,3 +29,6 @@ debug:
 tests:
 	mkdir -p bin
 	$(CXX_FANCY) -o bin/server_test deps/jsoncpp.cpp test/server_test.cc $(NORMAL_FLAGS)
+	$(CXX_FANCY) -o bin/test_addcolumn test/test_addcolumn.cc $(NORMAL_FLAGS)
+	$(CXX_FANCY) -o bin/test_constructor test/test_constructor.cc $(NORMAL_FLAGS)
+	$(CXX_FANCY) -o bin/test_rowmethods test/test_rowmethods.cc $(NORMAL_FLAGS)
